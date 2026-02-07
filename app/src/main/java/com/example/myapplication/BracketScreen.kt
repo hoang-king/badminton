@@ -1,0 +1,421 @@
+package com.example.myapplication
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+
+/**
+ * Main Bracket Screen
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BracketScreen(
+    navController: NavController,
+    gameViewModel: GameViewModel = viewModel(),
+    bracketViewModel: BracketViewModel = viewModel()
+) {
+    val teams by gameViewModel.teams.collectAsState()
+    val totalRounds by bracketViewModel.totalRounds.collectAsState()
+
+    LaunchedEffect(teams) {
+        if (teams.isNotEmpty()) {
+            bracketViewModel.setTeams(teams)
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            BracketTopBar(
+                hasTeams = teams.isNotEmpty(),
+                onBackClick = { navController.navigateUp() },
+                onResetClick = { bracketViewModel.resetBracket() }
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            if (teams.isEmpty()) {
+                EmptyState()
+            } else {
+                BracketContent(
+                    totalRounds = totalRounds,
+                    bracketViewModel = bracketViewModel
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Top App Bar
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BracketTopBar(
+    hasTeams: Boolean,
+    onBackClick: () -> Unit,
+    onResetClick: () -> Unit
+) {
+    TopAppBar(
+        title = {
+            Text(
+                "Knockout Bracket",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
+        },
+        actions = {
+            if (hasTeams) {
+                IconButton(onClick = onResetClick) {
+                    Icon(
+                        Icons.Default.Refresh,
+                        contentDescription = "Reset"
+                    )
+                }
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    )
+}
+
+/**
+ * Empty State
+ */
+@Composable
+private fun EmptyState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier
+                .padding(32.dp)
+                .fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "⚠️",
+                    style = MaterialTheme.typography.displayMedium
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "Chưa có đội",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Vui lòng tạo đội trước khi bắt đầu",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Bracket Content - Scrollable grid
+ */
+@Composable
+private fun BracketContent(
+    totalRounds: Int,
+    bracketViewModel: BracketViewModel
+) {
+    // ✅ Collect matches state
+    val matches by bracketViewModel.matches.collectAsState()
+
+    Box(
+        modifier = Modifier
+            .horizontalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(32.dp)
+        ) {
+            for (round in 0 until totalRounds) {
+                BracketRoundColumn(
+                    round = round,
+                    totalRounds = totalRounds,
+                    matches = matches.filter { it.roundIndex == round }
+                        .sortedBy { it.matchIndex },
+                    onTeamClick = { matchIndex, winner ->
+                        bracketViewModel.selectWinner(round, matchIndex, winner)
+                    }
+                )
+            }
+        }
+    }
+
+}
+/**
+ * Bracket Round Column - Vertical list of matches
+ */
+@Composable
+private fun BracketRoundColumn(
+    round: Int,
+    totalRounds: Int,
+    matches: List<BracketMatch>,
+    onTeamClick: (Int, Int) -> Unit
+) {
+    // Spacing theo cấp số 2: 16, 32, 64, 128...
+    val baseSpacing = 16
+    val multiplier = 1 shl round // 2^round
+    val spacing = (baseSpacing * multiplier).dp
+
+    Column(
+        modifier = Modifier.width(200.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing)
+    ) {
+        // Round header
+        RoundHeader(round = round, totalRounds = totalRounds)
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Matches với spacing để căn chỉnh theo binary tree
+        matches.forEach { match ->
+            if (round > 0) {
+                Spacer(modifier = Modifier.height((spacing.value / 2).dp))
+            }
+
+            MatchCard(
+                match = match,
+                onTeamClick = { winner ->
+                    onTeamClick(match.matchIndex, winner)
+                }
+            )
+
+            if (round > 0) {
+                Spacer(modifier = Modifier.height((spacing.value / 2).dp))
+            }
+        }
+    }
+}
+
+/**
+ * Round Header
+ */
+@Composable
+private fun RoundHeader(round: Int, totalRounds: Int) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = when {
+                round == totalRounds - 1 -> "Final"
+                round == totalRounds - 2 -> "Semi-Final"
+                round == totalRounds - 3 -> "Quarter-Final"
+                else -> "Round ${round + 1}"
+            },
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.padding(12.dp),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+
+@Composable
+private fun MatchCard(
+    match: BracketMatch,
+    onTeamClick: (Int) -> Unit
+) {
+    // ✅ Ẩn card nếu cả 2 team đều null
+    if (match.team1 == null && match.team2 == null) {
+        Spacer(modifier = Modifier.height(100.dp))
+        return
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            // Team 1
+            if (match.team1 != null) {
+                TeamBox(
+                    team = match.team1,
+                    teamIndex = match.team1Index,
+                    isWinner = match.winner == 1,
+                    isClickable = match.winner == null,
+                    onClick = { onTeamClick(1) }
+                )
+            }
+
+            // Divider
+            if (match.team1 != null && match.team2 != null) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+            }
+
+            // Team 2
+            if (match.team2 != null) {
+                TeamBox(
+                    team = match.team2,
+                    teamIndex = match.team2Index,
+                    isWinner = match.winner == 2,
+                    isClickable = match.winner == null,
+                    onClick = { onTeamClick(2) }
+                )
+            }
+        }
+    }
+}
+/**
+ * Team Box - Clickable team display
+ */
+@Composable
+private fun TeamBox(
+    team: List<String>,
+    teamIndex: Int?,
+    isWinner: Boolean,
+    isClickable: Boolean,
+    onClick: () -> Unit
+) {
+    val backgroundColor = when {
+        isWinner -> MaterialTheme.colorScheme.primaryContainer
+        isClickable -> MaterialTheme.colorScheme.surfaceVariant
+        else -> MaterialTheme.colorScheme.surface
+    }
+
+    val borderColor = when {
+        isWinner -> MaterialTheme.colorScheme.primary
+        else -> Color.Transparent
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(6.dp))
+            .background(backgroundColor)
+            .border(
+                width = if (isWinner) 2.dp else 0.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(6.dp)
+            )
+            .clickable(enabled = isClickable) { onClick() }
+            .padding(10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Team ${(teamIndex ?: 0) + 1}",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isWinner) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
+                )
+                team.forEach { player ->
+                    Text(
+                        text = player,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            if (isWinner) {
+                Text(
+                    text = "✓",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Empty Slot - Waiting for team
+ */
+//@Composable
+//private fun EmptySlot() {
+//    Box(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .clip(RoundedCornerShape(6.dp))
+//            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+//            .border(
+//                width = 1.dp,
+//                color = MaterialTheme.colorScheme.outlineVariant,
+//                shape = RoundedCornerShape(6.dp)
+//            )
+//            .padding(10.dp)
+//    ) {
+//        Text(
+//            text = "Waiting...",
+//            style = MaterialTheme.typography.bodySmall,
+//            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+//            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+//        )
+//    }
+//}
