@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.presentation.bracket
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +23,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.myapplication.domain.model.BracketMatch
+import com.example.myapplication.presentation.game.GameViewModel
 
 /**
  * Main Bracket Screen
@@ -126,31 +129,38 @@ private fun EmptyState() {
         Card(
             modifier = Modifier
                 .padding(32.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth(0.8f)
+                .fillMaxHeight(0.5f), // Thu nhỏ card còn 80% chiều rộng và vẫn căn giữa
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.errorContainer
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    "⚠️",
-                    style = MaterialTheme.typography.displayMedium
+                Icon(
+                    imageVector = Icons.Default.Error,
+                    contentDescription = "No teams",
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onErrorContainer
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "Chưa có đội",
+
+                    "No teams",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onErrorContainer
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Vui lòng tạo đội trước khi bắt đầu",
-                    style = MaterialTheme.typography.bodyMedium,
+                Text("Please create teams before starting",
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     textAlign = TextAlign.Center
                 )
@@ -393,29 +403,3 @@ private fun TeamBox(
         }
     }
 }
-
-/**
- * Empty Slot - Waiting for team
- */
-//@Composable
-//private fun EmptySlot() {
-//    Box(
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .clip(RoundedCornerShape(6.dp))
-//            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-//            .border(
-//                width = 1.dp,
-//                color = MaterialTheme.colorScheme.outlineVariant,
-//                shape = RoundedCornerShape(6.dp)
-//            )
-//            .padding(10.dp)
-//    ) {
-//        Text(
-//            text = "Waiting...",
-//            style = MaterialTheme.typography.bodySmall,
-//            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-//            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-//        )
-//    }
-//}

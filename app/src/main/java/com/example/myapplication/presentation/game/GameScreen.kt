@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.presentation.game
 
 import android.content.Intent
 import androidx.compose.foundation.layout.*
@@ -28,6 +28,9 @@ fun GameScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    var showTopMenu by remember { mutableStateOf(false) }
+    var showTeamsMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -36,8 +39,34 @@ fun GameScreen(
                     Text(
                         "Quản lý trận đấu",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        fontWeight = FontWeight.Bold
                     )
+                },
+                actions = {
+                    IconButton(onClick = { showTopMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Menu chính")
+                    }
+                    DropdownMenu(
+                        expanded = showTopMenu,
+                        onDismissRequest = { showTopMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Score") },
+                            leadingIcon = { Icon(Icons.Default.Star, null) },
+                            onClick = {
+                                showTopMenu = false
+                                navController.navigate("Score")
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("History") },
+                            leadingIcon = { Icon(Icons.Default.History, null) },
+                            onClick = {
+                                showTopMenu = false
+                                // navController.navigate("history")
+                            }
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -79,128 +108,36 @@ fun GameScreen(
                         Text(
                             "Danh sách người chơi",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
 
                     OutlinedTextField(
                         value = playerInput,
-                        onValueChange = gameViewModel::setPlayerInput,
+                        onValueChange = { gameViewModel.setPlayerInput(it) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(140.dp),
-                        placeholder = { Text("Nhập tên người chơi (mỗi dòng một tên)") },
+                        placeholder = { Text("Nhập tên người chơi (Ví dụ:\n- Nguyễn Văn A\n- Trần Thị B)") },
                         shape = RoundedCornerShape(12.dp)
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-
-                        // RANDOM ĐỘI
-                        Button(
-                            onClick = { gameViewModel.randomTeams() },
-                            modifier = Modifier.weight(1f),
-                            enabled = playerInput.isNotBlank(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            ),
-                            contentPadding = PaddingValues(vertical = 14.dp)
-                        ) {
-                            Icon(Icons.Default.Shuffle, null, Modifier.size(20.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Random đội")
-                        }
-
-                        // SHARE SHEET
-                        Button(
-                            onClick = {
-                                val message = gameViewModel.getShareMessage()
-                                val sendIntent = Intent().apply {
-                                    action = Intent.ACTION_SEND
-                                    putExtra(Intent.EXTRA_TEXT, message)
-                                    type = "text/plain"
-                                }
-                                val shareIntent = Intent.createChooser(sendIntent, "Chia sẻ với")
-                                context.startActivity(shareIntent)
-                            },
-                            modifier = Modifier.weight(1f),
-                            enabled = teams.isNotEmpty(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.secondary
-                            ),
-                            contentPadding = PaddingValues(vertical = 14.dp)
-                        ) {
-                            Icon(Icons.Default.Share, null, Modifier.size(20.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Share")
-                        }
-                    }
-                }
-            }
-
-            // Card chức năng
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        "Chức năng",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-
-                        // BRACKET BUTTON
-                        Button(
-                            modifier = Modifier.weight(1f),
-                            onClick = { navController.navigate("bracket") }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AccountTree,
-                                contentDescription = null
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Bracket")
-                        }
-
-                        // SCORE BUTTON
-                        Button(
-                            modifier = Modifier.weight(1f),
-                            onClick = { navController.navigate("Score") }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = null
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Score")
-                        }
-                    }
-
-                    // CIRCLE BUTTON
+                    // RANDOM ĐỘI - Full Width
                     Button(
+                        onClick = { 
+                            gameViewModel.randomTeams()
+                            keyboardController?.hide() // Ẩn bàn phím
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { navController.navigate("circle") }
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        contentPadding = PaddingValues(vertical = 14.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Circle,
-                            contentDescription = null
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Circle")
+                        Icon(Icons.Default.Shuffle, null, Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Random đội")
                     }
                 }
             }
@@ -217,14 +154,60 @@ fun GameScreen(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Default.Group, null, tint = MaterialTheme.colorScheme.primary)
                             Text(
                                 "Các đội đã tạo (${teams.size})",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = MaterialTheme.typography.titleMedium.fontWeight
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f)
                             )
+                            
+                            // Menu Button moved here
+                            Box {
+                                IconButton(onClick = { showTeamsMenu = true }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = "Menu đội")
+                                }
+                                DropdownMenu(
+                                    expanded = showTeamsMenu,
+                                    onDismissRequest = { showTeamsMenu = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Bracket") },
+                                        leadingIcon = { Icon(Icons.Default.AccountTree, null) },
+                                        onClick = {
+                                            showTeamsMenu = false
+                                            navController.navigate("bracket")
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Circle") },
+                                        leadingIcon = { Icon(Icons.Default.Circle, null) },
+                                        onClick = {
+                                            showTeamsMenu = false
+                                            navController.navigate("circle")
+                                        }
+                                    )
+                                    HorizontalDivider()
+                                    DropdownMenuItem(
+                                        text = { Text("Share") },
+                                        leadingIcon = { Icon(Icons.Default.Share, null) },
+                                        onClick = {
+                                            showTeamsMenu = false
+                                            val message = gameViewModel.getShareMessage()
+                                            val sendIntent = Intent().apply {
+                                                action = Intent.ACTION_SEND
+                                                putExtra(Intent.EXTRA_TEXT, message)
+                                                type = "text/plain"
+                                            }
+                                            val shareIntent = Intent.createChooser(sendIntent, "Chia sẻ với")
+                                            context.startActivity(shareIntent)
+                                        }
+                                    )
+                                }
+                            }
                         }
 
                         teams.forEachIndexed { index, team ->

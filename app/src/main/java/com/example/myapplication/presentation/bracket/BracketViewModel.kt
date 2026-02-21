@@ -1,27 +1,17 @@
-package com.example.myapplication
+package com.example.myapplication.presentation.bracket
 
 import androidx.lifecycle.ViewModel
+import com.example.myapplication.domain.model.BracketMatch
+import com.example.myapplication.domain.usecase.GenerateBracketUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlin.math.log2
-
-/**
- * Data class cho một trận đấu trong bracket
- */
-data class BracketMatch(
-    val roundIndex: Int,
-    val matchIndex: Int,
-    val team1: List<String>? = null,
-    val team2: List<String>? = null,
-    val team1Index: Int? = null,
-    val team2Index: Int? = null,
-    val winner: Int? = null // 1 hoặc 2
-)
 
 /**
  * ViewModel quản lý Knockout Bracket theo mô hình cây nhị phân
  */
 class BracketViewModel : ViewModel() {
+
+    private val generateBracketUseCase = GenerateBracketUseCase()
 
     private val _matches = MutableStateFlow<List<BracketMatch>>(emptyList())
     val matches = _matches.asStateFlow()
@@ -36,68 +26,28 @@ class BracketViewModel : ViewModel() {
      * Khởi tạo bracket với danh sách đội
      */
     fun setTeams(teams: List<List<String>>) {
-        _teams.value = teams.shuffled()
-        generateBracket()
+        // Chỉ tạo mới nếu danh sách đội thực sự thay đổi hoặc chưa có matches
+        if (_matches.value.isEmpty() || _teams.value != teams) {
+            _teams.value = teams
+            generateBracket()
+        }
     }
 
     /**
      * Sinh bracket theo cấu trúc cây nhị phân
      */
     private fun generateBracket() {
-        val teamList = _teams.value
-        if (teamList.isEmpty()) {
-            _matches.value = emptyList()
-            _totalRounds.value = 0
-            return
-        }
-
-        val numTeams = teamList.size
-
-        // Tìm kích thước bracket (lũy thừa 2 gần nhất)
-        var totalSlots = 1
-        while (totalSlots < numTeams) totalSlots *= 2
-
-        val rounds = log2(totalSlots.toDouble()).toInt()
+        if (_teams.value.isEmpty()) return
+        
+        val (matches, rounds) = generateBracketUseCase(_teams.value)
+        _matches.value = matches
         _totalRounds.value = rounds
-
-        val matches = mutableListOf<BracketMatch>()
-
-        // Tạo Round 1 (leaf nodes)
-        val numMatchesR1 = totalSlots / 2
-        for (i in 0 until numMatchesR1) {
-            val team1 = teamList.getOrNull(i * 2)
-            val team2 = teamList.getOrNull(i * 2 + 1)
-
-            matches.add(
-                BracketMatch(
-                    roundIndex = 0,
-                    matchIndex = i,
-                    team1 = team1,
-                    team2 = team2,
-                    team1Index = if (team1 != null) i * 2 else null,
-                    team2Index = if (team2 != null) i * 2 + 1 else null,
-                    winner = if (team1 != null && team2 == null) 1 else null
-                )
-            )
+        
+        if (matches.isNotEmpty()) {
+            val mutableMatches = matches.toMutableList()
+            propagateWinners(mutableMatches)
+            _matches.value = mutableMatches
         }
-
-        // Tạo các round còn lại (internal nodes)
-        for (round in 1 until rounds) {
-            val matchesInRound = totalSlots / (1 shl (round + 1))
-            for (m in 0 until matchesInRound) {
-                matches.add(
-                    BracketMatch(
-                        roundIndex = round,
-                        matchIndex = m
-                    )
-                )
-            }
-        }
-
-        // Tự động propagate winners (đặc biệt cho bye matches)
-        propagateWinners(matches)
-
-        _matches.value = matches.sortedWith(compareBy({ it.roundIndex }, { it.matchIndex }))
     }
 
     /**
@@ -171,7 +121,7 @@ class BracketViewModel : ViewModel() {
         for (round in 0 until _totalRounds.value - 1) {
             val roundMatches = matches.filter {
                 it.roundIndex == round && it.winner != null
-            }
+            }.toList()
 
             for (match in roundMatches) {
                 val winningTeam = if (match.winner == 1) match.team1 else match.team2

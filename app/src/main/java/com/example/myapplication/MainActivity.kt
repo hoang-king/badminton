@@ -8,8 +8,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-
-import com.example.myapplication.ui.theme.MyApplicationTheme
+import com.example.myapplication.presentation.bracket.BracketScreen
+import com.example.myapplication.presentation.bracket.BracketViewModel
+import com.example.myapplication.presentation.circle.CircleScreen
+import com.example.myapplication.presentation.circle.CircleViewModel
+import com.example.myapplication.presentation.game.GameScreen
+import com.example.myapplication.presentation.game.GameViewModel
+import com.example.myapplication.presentation.score.BadmintonScoreScreen
+import com.example.myapplication.presentation.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,9 +54,7 @@ class MainActivity : ComponentActivity() {
                         BadmintonScoreScreen(
                             navController = navController
                         )
-
                     }
-
                 }
             }
         }

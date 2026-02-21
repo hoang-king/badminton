@@ -1,34 +1,11 @@
-package com.example.myapplication
+package com.example.myapplication.domain.usecase
 
-import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.example.myapplication.domain.model.Match
 
-data class Match(
-    val matchNumber: Int,
-    val team1Index: Int,
-    val team2Index: Int,
-    val team1: List<String>,
-    val team2: List<String>
-)
-
-class CircleViewModel : ViewModel() {
-    private val _matches = MutableStateFlow<List<Match>>(emptyList())
-    val matches = _matches.asStateFlow()
-
-    private val _teams = MutableStateFlow<List<List<String>>>(emptyList())
-    val teams = _teams.asStateFlow()
-
-    fun setTeams(teams: List<List<String>>) {
-        _teams.value = teams
-        generateRoundRobinMatches()
-    }
-
-    private fun generateRoundRobinMatches() {
-        val teamsList = _teams.value
+class GenerateRoundRobinMatchesUseCase {
+    operator fun invoke(teamsList: List<List<String>>): List<Match> {
         if (teamsList.isEmpty()) {
-            _matches.value = emptyList()
-            return
+            return emptyList()
         }
 
         // Tạo tất cả các cặp đấu có thể
@@ -43,7 +20,7 @@ class CircleViewModel : ViewModel() {
         val scheduledMatches = scheduleMatchesWithRest(allPairs, teamsList.size)
 
         // Chuyển đổi thành Match objects
-        val matchList = scheduledMatches.mapIndexed { index, pair ->
+        return scheduledMatches.mapIndexed { index, pair ->
             Match(
                 matchNumber = index + 1,
                 team1Index = pair.first,
@@ -52,8 +29,6 @@ class CircleViewModel : ViewModel() {
                 team2 = teamsList[pair.second]
             )
         }
-
-        _matches.value = matchList
     }
 
     private fun scheduleMatchesWithRest(
@@ -111,7 +86,4 @@ class CircleViewModel : ViewModel() {
 
         return result
     }
-
-    fun getTotalTeams(): Int = _teams.value.size
-    fun getTotalMatches(): Int = _matches.value.size
 }

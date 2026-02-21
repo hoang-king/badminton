@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.presentation.score
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
@@ -8,7 +8,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,35 +16,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BadmintonScoreScreen(navController: NavController) {
-    // Sử dụng các biến trạng thái hiện có của bạn
-    var scoreA by rememberSaveable { mutableStateOf(0) }
-    var scoreB by rememberSaveable { mutableStateOf(0) }
-//    // Giữ lại logic của bạn cho trường hợp cần dùng sau này
-//    var setA by remember { mutableStateOf(0) }
-//    var setB by remember { mutableStateOf(0) }
-    var winner by rememberSaveable { mutableStateOf<String?>(null) }
-
-    fun resetGame() {
-        scoreA = 0
-        scoreB = 0
-        // setA = 0
-        // setB = 0
-        winner = null
-    }
-    fun checkWinner() {
-        if (scoreA >= 21 && scoreA - scoreB >= 2) {
-            winner = "Player 1"
-        } else if (scoreB >= 21 && scoreB - scoreA >= 2) {
-            winner = "Player 2"
-        }
-    }
+fun BadmintonScoreScreen(
+    navController: NavController,
+    scoreViewModel: ScoreViewModel = viewModel()
+) {
+    val scoreA by scoreViewModel.scoreA.collectAsState()
+    val scoreB by scoreViewModel.scoreB.collectAsState()
+    val winner by scoreViewModel.winner.collectAsState()
 
     Scaffold(
         topBar = {
@@ -57,9 +39,7 @@ fun BadmintonScoreScreen(navController: NavController) {
                         color = Color.Black
                     )
                 },
-                colors = TopAppBarDefaults.topAppBarColors(Color(0xFF90CAF9)), // Thanh topbar màu đen
-                // Navigation icon được loại bỏ để đơn giản hóa giao diện theo hình
-                // Nhưng có thể giữ lại nếu bạn muốn:
+                colors = TopAppBarDefaults.topAppBarColors(Color(0xFF90CAF9)),
                  navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
@@ -70,13 +50,12 @@ fun BadmintonScoreScreen(navController: NavController) {
                     }
                 }
             )
-
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background( Color(0xFF90CAF9)) // Nền đen theo hình ảnh bao quanh
+                .background( Color(0xFF90CAF9))
                 .padding(innerPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -90,7 +69,7 @@ fun BadmintonScoreScreen(navController: NavController) {
                 // Ô GIẢM ĐIỂM BÊN TRÁI
                 ScoreButton(
                     symbol = "-",
-                    onClick = { if (scoreA > 0) scoreA-- },
+                    onClick = { scoreViewModel.decrementA() },
                     modifier = Modifier.weight(1f),
                     color = Color.Black,
                     bgColor = Color(0xFF90CAF9)
@@ -102,7 +81,7 @@ fun BadmintonScoreScreen(navController: NavController) {
                         .weight(4f)
                         .fillMaxHeight()
                         .background(Color(0xFF90CAF9))
-                        .clickable { resetGame() },
+                        .clickable { scoreViewModel.resetGame() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -116,7 +95,7 @@ fun BadmintonScoreScreen(navController: NavController) {
                 // Ô GIẢM ĐIỂM BÊN PHẢI
                 ScoreButton(
                     symbol = "-",
-                    onClick = { if (scoreB > 0) scoreB-- },
+                    onClick = { scoreViewModel.decrementB() },
                     modifier = Modifier.weight(1f),
                     color = Color.Black,
                     bgColor = Color(0xFF90CAF9)
@@ -143,17 +122,12 @@ fun BadmintonScoreScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(3f) // Cung cấp không gian lớn hơn cho phần điểm số
+                    .weight(3f)
             ) {
                 // Ô TĂNG ĐIỂM BÊN TRÁI
                 ScoreButton(
                     symbol = "+",
-                    onClick = {
-                        if (winner == null) {
-                            scoreA++
-                            checkWinner()
-                        }
-                    },
+                    onClick = { scoreViewModel.incrementA() },
                     modifier = Modifier.weight(1f),
                     color = Color.Black,
                     bgColor = Color(0xFF90CAF9)
@@ -178,12 +152,7 @@ fun BadmintonScoreScreen(navController: NavController) {
                 // Ô TĂNG ĐIỂM BÊN PHẢI
                 ScoreButton(
                     symbol = "+",
-                    onClick = {
-                        if (winner == null) {
-                            scoreB++
-                            checkWinner()
-                        }
-                    },
+                    onClick = { scoreViewModel.incrementB() },
                     modifier = Modifier.weight(1f),
                     color = Color.Black,
                     bgColor = Color(0xFF90CAF9)
@@ -235,8 +204,8 @@ fun ScoreButton(
     symbol: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    color: Color, // Màu chữ/biểu tượng
-    bgColor: Color // Màu nền
+    color: Color,
+    bgColor: Color
 ) {
     Box(
         modifier = modifier
@@ -248,7 +217,7 @@ fun ScoreButton(
         Text(
             text = symbol,
             color = color,
-            fontSize = 64.sp, // Kích thước lớn cho các nút + và -
+            fontSize = 64.sp,
             fontWeight = FontWeight.Black
         )
     }

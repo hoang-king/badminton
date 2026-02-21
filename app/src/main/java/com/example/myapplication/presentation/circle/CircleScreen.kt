@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.presentation.circle
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,10 +10,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.myapplication.domain.model.Match
+import com.example.myapplication.presentation.game.GameViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,86 +33,92 @@ fun CircleScreen(
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Top App Bar
-        TopAppBar(
-            title = {
-                Column {
-                    Text(
-                        "Lịch thi đấu Vòng tròn",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (teams.isNotEmpty()) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
                         Text(
-                            "${circleViewModel.getTotalTeams()} đội • ${circleViewModel.getTotalMatches()} trận",
-                            style = MaterialTheme.typography.bodySmall
+                            "Lịch thi đấu Vòng tròn",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
                         )
-                    }
-                }
-            },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Quay lại"
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-
-        ) {
-            if (teams.isEmpty()) {
-                // Empty state
-                Box (modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center){
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+                        if (teams.isNotEmpty()) {
                             Text(
-                                "⚠️",
-                                style = MaterialTheme.typography.displayMedium
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                "Chưa có đội nào",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "Vui lòng quay lại màn hình chính và tạo đội trước.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                textAlign = TextAlign.Center
+                                "${circleViewModel.getTotalTeams()} đội • ${circleViewModel.getTotalMatches()} trận",
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                     }
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Quay lại"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            )
+        }
+    ) { paddingValues ->
+        if (teams.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .padding(32.dp)
+                        .fillMaxWidth(0.8f)
+                        .fillMaxHeight(0.5f), // Thu nhỏ card còn 80% chiều rộng và vẫn căn giữa
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            "⚠️",
+                            style = MaterialTheme.typography.displayMedium
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "Chưa có đội nào",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Vui lòng quay lại màn hình chính và tạo đội trước.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
                 }
-
-            } else {
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+            ) {
                 // Thông tin tổng quan
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -129,20 +136,18 @@ fun CircleScreen(
                         StatCard(
                             value = "${circleViewModel.getTotalTeams()}",
                             label = "Đội",
-                            icon = ""
+                            icon = "👥"
                         )
 
-                        Divider(
-                            modifier = Modifier
-                                .height(60.dp)
-                                .width(1.dp),
+                        VerticalDivider(
+                            modifier = Modifier.height(60.dp),
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.3f)
                         )
 
                         StatCard(
                             value = "${circleViewModel.getTotalMatches()}",
                             label = "Trận đấu",
-                            icon = ""
+                            icon = "🏸"
                         )
                     }
                 }
