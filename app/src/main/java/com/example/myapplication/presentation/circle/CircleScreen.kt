@@ -1,14 +1,17 @@
 package com.example.myapplication.presentation.circle
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,12 +28,22 @@ fun CircleScreen(
 ) {
     val teams by gameViewModel.teams.collectAsState()
     val matches by circleViewModel.matches.collectAsState()
+    val context = LocalContext.current
 
     // Truyền teams từ GameViewModel sang CircleViewModel
     LaunchedEffect(teams) {
         if (teams.isNotEmpty()) {
             circleViewModel.setTeams(teams)
         }
+    }
+
+    fun shareSchedule() {
+        val scheduleText = buildScheduleText(matches, teams)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, scheduleText)
+        }
+        context.startActivity(Intent.createChooser(intent, "Chia sẻ lịch thi đấu"))
     }
 
     Scaffold(
@@ -59,10 +72,21 @@ fun CircleScreen(
                         )
                     }
                 },
+                actions = {
+                    if (teams.isNotEmpty()) {
+                        IconButton(onClick = { shareSchedule() }) {
+                            Icon(
+                                Icons.Filled.Share,
+                                contentDescription = "Chia sẻ lịch thi đấu"
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         }
@@ -303,4 +327,22 @@ private fun TeamColumn(
             }
         }
     }
+}
+
+private fun buildScheduleText(matches: List<Match>, teams: List<List<String>>): String {
+    val builder = StringBuilder()
+    builder.append("📋 LỊCH THI ĐẤU VÒNGtròn\n")
+    builder.append("=" .repeat(50)).append("\n\n")
+    builder.append("👥 Đội tuyển: ${teams.size}\n")
+    builder.append("🏸 Tổng trận: ${matches.size}\n\n")
+    
+    matches.forEach { match ->
+        builder.append("Trận ${match.matchNumber}:\n")
+        builder.append("  Đội ${match.team1Index + 1}: ${match.team1.joinToString(", ")}\n")
+        builder.append("  VS\n")
+        builder.append("  Đội ${match.team2Index + 1}: ${match.team2.joinToString(", ")}\n")
+        builder.append("\n")
+    }
+    
+    return builder.toString()
 }

@@ -57,7 +57,8 @@ fun BadmintonScoreScreen(
                 .fillMaxSize()
                 .background( Color(0xFF90CAF9))
                 .padding(innerPadding),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             // ==== HÀNG TRÊN: NÚT RESET VÀ NÚT TĂNG/GIẢM ĐIỂM NGANG ====
             Row(
