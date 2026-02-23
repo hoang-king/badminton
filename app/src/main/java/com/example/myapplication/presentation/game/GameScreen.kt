@@ -55,7 +55,7 @@ fun GameScreen(
                             leadingIcon = { Icon(Icons.Default.Star, null) },
                             onClick = {
                                 showTopMenu = false
-                                navController.navigate("Score")
+                                navController.navigate("score")
                             }
                         )
                         DropdownMenuItem(
@@ -63,7 +63,7 @@ fun GameScreen(
                             leadingIcon = { Icon(Icons.Default.History, null) },
                             onClick = {
                                 showTopMenu = false
-                                // navController.navigate("history")
+                                navController.navigate("history")
                             }
                         )
                     }

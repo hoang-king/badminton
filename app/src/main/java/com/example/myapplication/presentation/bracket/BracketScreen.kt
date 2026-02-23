@@ -18,11 +18,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.example.myapplication.R
 import com.example.myapplication.domain.model.BracketMatch
 import com.example.myapplication.presentation.game.GameViewModel
 
@@ -38,11 +43,47 @@ fun BracketScreen(
 ) {
     val teams by gameViewModel.teams.collectAsState()
     val totalRounds by bracketViewModel.totalRounds.collectAsState()
+    val showSaveDialog by bracketViewModel.showSaveDialog.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(teams) {
         if (teams.isNotEmpty()) {
             bracketViewModel.setTeams(teams)
         }
+    }
+
+    // Dialog lưu lịch sử
+    if (showSaveDialog) {
+        AlertDialog(
+            onDismissRequest = { bracketViewModel.closeSaveDialog() },
+            title = { Text("Chúc mừng nhà vô địch!") },
+            text = { 
+                val champion = bracketViewModel.getChampion()
+                Column {
+                    Text("Bạn có muốn lưu kết quả giải đấu này vào lịch sử?")
+                    if (champion != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Đội thắng: ${champion.joinToString(", ")}",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    bracketViewModel.saveToHistory(context)
+                }) {
+                    Text("Lưu")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { bracketViewModel.closeSaveDialog() }) {
+                    Text("Hủy")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -179,6 +220,7 @@ private fun BracketContent(
 ) {
     // ✅ Collect matches state
     val matches by bracketViewModel.matches.collectAsState()
+    val isFinalWon by bracketViewModel.isFinalWon.collectAsState()
 
     Box(
         modifier = Modifier
@@ -196,6 +238,7 @@ private fun BracketContent(
                     totalRounds = totalRounds,
                     matches = matches.filter { it.roundIndex == round }
                         .sortedBy { it.matchIndex },
+                    isFinalWon = isFinalWon,
                     onTeamClick = { matchIndex, winner ->
                         bracketViewModel.selectWinner(round, matchIndex, winner)
                     }
@@ -213,6 +256,7 @@ private fun BracketRoundColumn(
     round: Int,
     totalRounds: Int,
     matches: List<BracketMatch>,
+    isFinalWon: Boolean,
     onTeamClick: (Int, Int) -> Unit
 ) {
     // Spacing theo cấp số 2: 16, 32, 64, 128...
@@ -237,6 +281,8 @@ private fun BracketRoundColumn(
 
             MatchCard(
                 match = match,
+                isFinal = round == totalRounds - 1,
+                isFinalWon = isFinalWon,
                 onTeamClick = { winner ->
                     onTeamClick(match.matchIndex, winner)
                 }
@@ -279,6 +325,8 @@ private fun RoundHeader(round: Int, totalRounds: Int) {
 @Composable
 private fun MatchCard(
     match: BracketMatch,
+    isFinal: Boolean = false,
+    isFinalWon: Boolean = false,
     onTeamClick: (Int) -> Unit
 ) {
     // ✅ Ẩn card nếu cả 2 team đều null
@@ -287,48 +335,55 @@ private fun MatchCard(
         return
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            shape = RoundedCornerShape(8.dp)
         ) {
-            // Team 1
-            if (match.team1 != null) {
-                TeamBox(
-                    team = match.team1,
-                    teamIndex = match.team1Index,
-                    isWinner = match.winner == 1,
-                    isClickable = match.winner == null,
-                    onClick = { onTeamClick(1) }
-                )
-            }
+            Column(
+                modifier = Modifier.padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Team 1
+                if (match.team1 != null) {
+                    TeamBox(
+                        team = match.team1,
+                        teamIndex = match.team1Index,
+                        isWinner = match.winner == 1,
+                        isClickable = match.winner == null,
+                        onClick = { onTeamClick(1) }
+                    )
+                }
 
-            // Divider
-            if (match.team1 != null && match.team2 != null) {
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 4.dp),
-                    thickness = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-            }
+                // Divider
+                if (match.team1 != null && match.team2 != null) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                        thickness = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                }
 
-            // Team 2
-            if (match.team2 != null) {
-                TeamBox(
-                    team = match.team2,
-                    teamIndex = match.team2Index,
-                    isWinner = match.winner == 2,
-                    isClickable = match.winner == null,
-                    onClick = { onTeamClick(2) }
-                )
+                // Team 2
+                if (match.team2 != null) {
+                    TeamBox(
+                        team = match.team2,
+                        teamIndex = match.team2Index,
+                        isWinner = match.winner == 2,
+                        isClickable = match.winner == null,
+                        onClick = { onTeamClick(2) }
+                    )
+                }
             }
+        }
+
+        // Fire animation for final match winner
+        if (isFinal && isFinalWon) {
+            FireAnimation(modifier = Modifier.align(Alignment.Center))
         }
     }
 }
@@ -402,4 +457,19 @@ private fun TeamBox(
             }
         }
     }
+}
+
+/**
+ * Fire Animation for final match
+ */
+@Composable
+private fun FireAnimation(modifier: Modifier = Modifier) {
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.fire))
+    
+    LottieAnimation(
+        composition = composition,
+        modifier = modifier
+            .size(200.dp),
+        iterations = Int.MAX_VALUE
+    )
 }

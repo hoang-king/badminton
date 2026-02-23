@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     // ✅ Thêm plugin serialization
     kotlin("plugin.serialization") version "1.9.20"
+    // ✅ Thêm kapt plugin thay vì KSP
+    kotlin("kapt")
 }
 
 android {
@@ -66,13 +68,22 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
 
+    // ✅ Room Database
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
+
     // Debug tools
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+//animation
+    implementation("com.airbnb.android:lottie-compose:6.4.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+
 }

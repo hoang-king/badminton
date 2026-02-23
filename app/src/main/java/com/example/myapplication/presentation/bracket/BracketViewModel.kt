@@ -1,10 +1,18 @@
 package com.example.myapplication.presentation.bracket
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.AppDatabase
+import com.example.myapplication.data.RoundRobinHistoryEntity
+import com.example.myapplication.data.repository.RoundRobinHistoryRepository
 import com.example.myapplication.domain.model.BracketMatch
 import com.example.myapplication.domain.usecase.GenerateBracketUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * ViewModel quản lý Knockout Bracket theo mô hình cây nhị phân
@@ -21,6 +29,12 @@ class BracketViewModel : ViewModel() {
 
     private val _totalRounds = MutableStateFlow(0)
     val totalRounds = _totalRounds.asStateFlow()
+
+    private val _isFinalWon = MutableStateFlow(false)
+    val isFinalWon = _isFinalWon.asStateFlow()
+
+    private val _showSaveDialog = MutableStateFlow(false)
+    val showSaveDialog = _showSaveDialog.asStateFlow()
 
     /**
      * Khởi tạo bracket với danh sách đội
@@ -78,6 +92,68 @@ class BracketViewModel : ViewModel() {
         propagateWinners(matches)
 
         _matches.value = matches
+
+        // 4. Check if final match has a winner
+        val finalMatch = matches.find {
+            it.roundIndex == _totalRounds.value - 1 && it.matchIndex == 0
+        }
+        val isWon = finalMatch?.winner != null
+        _isFinalWon.value = isWon
+        if (isWon) {
+            _showSaveDialog.value = true
+        }
+    }
+
+    fun closeSaveDialog() {
+        _showSaveDialog.value = false
+    }
+
+    fun saveToHistory(context: Context) {
+        val champion = getChampion()
+        val championIndex = getChampionIndex()
+        val teams = _teams.value
+        val matches = _matches.value
+
+        if (champion == null) return
+
+        viewModelScope.launch {
+            try {
+                val db = AppDatabase.getDatabase(context)
+                val repository = RoundRobinHistoryRepository(db.roundRobinHistoryDao())
+                
+                val winnerTeamName = champion.joinToString(", ")
+                
+                // Encode structure for history
+                // We use the same format as Circle for compatibility, 
+                // but knockout structure is different. For now, we save teams and champion.
+                val history = RoundRobinHistoryEntity(
+                    teams = Json.encodeToString(teams),
+                    results = Json.encodeToString(matches.map { it.winner }),
+                    winnerTeam = winnerTeamName,
+                    winnerTeamIndex = championIndex,
+                    notes = "Knockout"
+                )
+                
+                repository.saveHistory(history)
+                _showSaveDialog.value = false
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun getChampionIndex(): Int? {
+        if (_totalRounds.value == 0) return null
+
+        val finalMatch = _matches.value.find {
+            it.roundIndex == _totalRounds.value - 1 && it.matchIndex == 0
+        }
+
+        return when (finalMatch?.winner) {
+            1 -> finalMatch.team1Index
+            2 -> finalMatch.team2Index
+            else -> null
+        }
     }
 
     /**
@@ -180,6 +256,7 @@ class BracketViewModel : ViewModel() {
      * Reset bracket (shuffle và tạo lại)
      */
     fun resetBracket() {
+        _isFinalWon.value = false
         generateBracket()
     }
 }

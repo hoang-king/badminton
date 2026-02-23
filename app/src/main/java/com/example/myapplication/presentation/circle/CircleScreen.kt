@@ -1,6 +1,7 @@
 package com.example.myapplication.presentation.circle
 
 import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -18,6 +20,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.myapplication.domain.model.Match
 import com.example.myapplication.presentation.game.GameViewModel
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,13 +32,43 @@ fun CircleScreen(
 ) {
     val teams by gameViewModel.teams.collectAsState()
     val matches by circleViewModel.matches.collectAsState()
+    val showSaveDialog by circleViewModel.showSaveDialog.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     // Truyền teams từ GameViewModel sang CircleViewModel
     LaunchedEffect(teams) {
         if (teams.isNotEmpty()) {
             circleViewModel.setTeams(teams)
         }
+    }
+
+    // Dialog lưu lịch sử
+    if (showSaveDialog) {
+        AlertDialog(
+            onDismissRequest = { circleViewModel.closeSaveDialog() },
+            title = { Text("Lưu kết quả") },
+            text = { Text("Bạn muốn lưu kết quả vào lịch sử?") },
+            confirmButton = {
+                Button(onClick = {
+                    scope.launch {
+                        circleViewModel.saveToHistory(context, matches, teams)
+                        circleViewModel.closeSaveDialog()
+                        // Quay về màn hình quản lý trận đấu
+                        navController.navigate("game") {
+                            popUpTo("game") { inclusive = true }
+                        }
+                    }
+                }) {
+                    Text("Lưu")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { circleViewModel.closeSaveDialog() }) {
+                    Text("Hủy")
+                }
+            }
+        )
     }
 
     fun shareSchedule() {
@@ -190,7 +224,12 @@ fun CircleScreen(
 
                 // Danh sách trận đấu
                 matches.forEach { match ->
-                    MatchCard(match = match)
+                    MatchCard(
+                        match = match,
+                        onWinnerSelected = { winnerIndex ->
+                            circleViewModel.setMatchWinner(match.matchNumber, winnerIndex)
+                        }
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
             }
@@ -228,7 +267,7 @@ private fun StatCard(
 }
 
 @Composable
-private fun MatchCard(match: Match) {
+private fun MatchCard(match: Match, onWinnerSelected: (Int?) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
@@ -264,6 +303,11 @@ private fun MatchCard(match: Match) {
                 TeamColumn(
                     teamNumber = match.team1Index + 1,
                     players = match.team1,
+                    isWinner = match.winnerIndex == 0,
+                    isLoser = match.winnerIndex == 1,
+                    onClick = { 
+                        if (match.winnerIndex == 0) onWinnerSelected(null) else onWinnerSelected(0)
+                    },
                     modifier = Modifier.weight(1f)
                 )
 
@@ -285,8 +329,31 @@ private fun MatchCard(match: Match) {
                 TeamColumn(
                     teamNumber = match.team2Index + 1,
                     players = match.team2,
+                    isWinner = match.winnerIndex == 1,
+                    isLoser = match.winnerIndex == 0,
+                    onClick = { 
+                        if (match.winnerIndex == 1) onWinnerSelected(null) else onWinnerSelected(1)
+                    },
                     modifier = Modifier.weight(1f)
                 )
+            }
+
+            // Hiển thị thông báo kết quả
+            if (match.winnerIndex != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "✓ Đội ${if (match.winnerIndex == 0) match.team1Index + 1 else match.team2Index + 1} thắng",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
             }
         }
     }
@@ -296,17 +363,23 @@ private fun MatchCard(match: Match) {
 private fun TeamColumn(
     teamNumber: Int,
     players: List<String>,
+    isWinner: Boolean = false,
+    isLoser: Boolean = false,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .clickable(onClick = onClick)
+            .alpha(if (isLoser) 0.4f else 1f)
+            .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             "Đội $teamNumber",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = if (isWinner) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.height(8.dp))
         players.forEach { player ->
