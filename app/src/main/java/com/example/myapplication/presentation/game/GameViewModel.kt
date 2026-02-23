@@ -49,6 +49,11 @@ class GameViewModel : ViewModel() {
         _teams.value = randomTeamsUseCase(playerInput.value.text)
     }
 
+    fun resetAll() {
+        _playerInput.value = TextFieldValue("")
+        _teams.value = emptyList()
+    }
+
     // Hàm này dùng để lấy nội dung Share Sheet
     fun getShareMessage(): String {
         val teamsText = _teams.value.mapIndexed { index, team ->
