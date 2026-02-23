@@ -52,19 +52,19 @@ fun BracketScreen(
         }
     }
 
-    // Dialog lưu lịch sử
+    // Dialog save history
     if (showSaveDialog) {
         AlertDialog(
             onDismissRequest = { bracketViewModel.closeSaveDialog() },
-            title = { Text("Chúc mừng nhà vô địch!") },
+            title = { Text("Congratulations Champion!") },
             text = { 
                 val champion = bracketViewModel.getChampion()
                 Column {
-                    Text("Bạn có muốn lưu kết quả giải đấu này vào lịch sử?")
+                    Text("Do you want to save this tournament result to history?")
                     if (champion != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Đội thắng: ${champion.joinToString(", ")}",
+                            "Winning Team: ${champion.joinToString(", ")}",
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -75,12 +75,12 @@ fun BracketScreen(
                 Button(onClick = {
                     bracketViewModel.saveToHistory(context)
                 }) {
-                    Text("Lưu")
+                    Text("Save")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { bracketViewModel.closeSaveDialog() }) {
-                    Text("Hủy")
+                    Text("Cancel")
                 }
             }
         )
@@ -273,7 +273,7 @@ private fun BracketRoundColumn(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Matches với spacing để căn chỉnh theo binary tree
+        // Matches with spacing to align according to binary tree
         matches.forEach { match ->
             if (round > 0) {
                 Spacer(modifier = Modifier.height((spacing.value / 2).dp))
@@ -329,7 +329,7 @@ private fun MatchCard(
     isFinalWon: Boolean = false,
     onTeamClick: (Int) -> Unit
 ) {
-    // ✅ Ẩn card nếu cả 2 team đều null
+    // ✅ Hide card if both teams are null
     if (match.team1 == null && match.team2 == null) {
         Spacer(modifier = Modifier.height(100.dp))
         return

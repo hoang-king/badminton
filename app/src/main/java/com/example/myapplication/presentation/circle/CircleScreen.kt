@@ -36,36 +36,36 @@ fun CircleScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Truyền teams từ GameViewModel sang CircleViewModel
+    // Pass teams from GameViewModel to CircleViewModel
     LaunchedEffect(teams) {
         if (teams.isNotEmpty()) {
             circleViewModel.setTeams(teams)
         }
     }
 
-    // Dialog lưu lịch sử
+    // Dialog save history
     if (showSaveDialog) {
         AlertDialog(
             onDismissRequest = { circleViewModel.closeSaveDialog() },
-            title = { Text("Lưu kết quả") },
-            text = { Text("Bạn muốn lưu kết quả vào lịch sử?") },
+            title = { Text("Save Result") },
+            text = { Text("Do you want to save the result to history?") },
             confirmButton = {
                 Button(onClick = {
                     scope.launch {
                         circleViewModel.saveToHistory(context, matches, teams)
                         circleViewModel.closeSaveDialog()
-                        // Quay về màn hình quản lý trận đấu
+                        // Navigate back to match management screen
                         navController.navigate("game") {
                             popUpTo("game") { inclusive = true }
                         }
                     }
                 }) {
-                    Text("Lưu")
+                    Text("Save")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { circleViewModel.closeSaveDialog() }) {
-                    Text("Hủy")
+                    Text("Cancel")
                 }
             }
         )
@@ -77,7 +77,7 @@ fun CircleScreen(
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, scheduleText)
         }
-        context.startActivity(Intent.createChooser(intent, "Chia sẻ lịch thi đấu"))
+        context.startActivity(Intent.createChooser(intent, "Share tournament schedule"))
     }
 
     Scaffold(
@@ -86,23 +86,18 @@ fun CircleScreen(
                 title = {
                     Column {
                         Text(
-                            "Lịch thi đấu Vòng tròn",
+                            "Round Robin ",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
-                        if (teams.isNotEmpty()) {
-                            Text(
-                                "${circleViewModel.getTotalTeams()} đội • ${circleViewModel.getTotalMatches()} trận",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
+
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại"
+                            contentDescription = "Back"
                         )
                     }
                 },
@@ -111,7 +106,7 @@ fun CircleScreen(
                         IconButton(onClick = { shareSchedule() }) {
                             Icon(
                                 Icons.Filled.Share,
-                                contentDescription = "Chia sẻ lịch thi đấu"
+                                contentDescription = "Share tournament schedule"
                             )
                         }
                     }
@@ -136,7 +131,7 @@ fun CircleScreen(
                     modifier = Modifier
                         .padding(32.dp)
                         .fillMaxWidth(0.8f)
-                        .fillMaxHeight(0.5f), // Thu nhỏ card còn 80% chiều rộng và vẫn căn giữa
+                        .fillMaxHeight(0.5f), // Shrink card to 80% width and center
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     ),
@@ -155,14 +150,14 @@ fun CircleScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "Chưa có đội nào",
+                            "No Teams",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Vui lòng quay lại màn hình chính và tạo đội trước.",
+                            "Please go back to the main screen and create teams first.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
@@ -177,7 +172,7 @@ fun CircleScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
             ) {
-                // Thông tin tổng quan
+                // Overview Information
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -193,7 +188,7 @@ fun CircleScreen(
                     ) {
                         StatCard(
                             value = "${circleViewModel.getTotalTeams()}",
-                            label = "Đội",
+                            label = "Teams",
                             icon = "👥"
                         )
 
@@ -204,7 +199,7 @@ fun CircleScreen(
 
                         StatCard(
                             value = "${circleViewModel.getTotalMatches()}",
-                            label = "Trận đấu",
+                            label = "Matches",
                             icon = "🏸"
                         )
                     }
@@ -212,9 +207,9 @@ fun CircleScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Tiêu đề danh sách trận
+                // Match list title
                 Text(
-                    "📋 Danh sách các trận:",
+                    "📋 Match list:",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -222,7 +217,7 @@ fun CircleScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Danh sách trận đấu
+                // Match list
                 matches.forEach { match ->
                     MatchCard(
                         match = match,
@@ -376,7 +371,7 @@ private fun TeamColumn(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            "Đội $teamNumber",
+            "Team $teamNumber",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = if (isWinner) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
@@ -404,16 +399,16 @@ private fun TeamColumn(
 
 private fun buildScheduleText(matches: List<Match>, teams: List<List<String>>): String {
     val builder = StringBuilder()
-    builder.append("📋 LỊCH THI ĐẤU VÒNGtròn\n")
+    builder.append("📋 ROUND ROBIN TOURNAMENT SCHEDULE\n")
     builder.append("=" .repeat(50)).append("\n\n")
-    builder.append("👥 Đội tuyển: ${teams.size}\n")
-    builder.append("🏸 Tổng trận: ${matches.size}\n\n")
+    builder.append("👥 Teams: ${teams.size}\n")
+    builder.append("🏸 Total Matches: ${matches.size}\n\n")
     
     matches.forEach { match ->
-        builder.append("Trận ${match.matchNumber}:\n")
-        builder.append("  Đội ${match.team1Index + 1}: ${match.team1.joinToString(", ")}\n")
+        builder.append("Match ${match.matchNumber}:\n")
+        builder.append("  Team ${match.team1Index + 1}: ${match.team1.joinToString(", ")}\n")
         builder.append("  VS\n")
-        builder.append("  Đội ${match.team2Index + 1}: ${match.team2.joinToString(", ")}\n")
+        builder.append("  Team ${match.team2Index + 1}: ${match.team2.joinToString(", ")}\n")
         builder.append("\n")
     }
     

@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.presentation.history
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,8 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.myapplication.presentation.history.HistoryViewModel
 import com.example.myapplication.data.RoundRobinHistoryEntity
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,23 +40,18 @@ fun HistoryScreen(
                 title = {
                     Column {
                         Text(
-                            "Lịch sử thi đấu",
+                            "Tournament History",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
-                        if (histories.isNotEmpty()) {
-                            Text(
-                                "${histories.size} kỳ thi",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
+
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại"
+                            contentDescription = "Back"
                         )
                     }
                 },
@@ -98,14 +93,14 @@ fun HistoryScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "Chưa có lịch sử",
+                            "No History",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Hãy hoàn thành trận đấu để lưu lịch sử.",
+                            "Complete a match to save history.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
@@ -156,7 +151,7 @@ private fun HistoryCard(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Đội thắng
+                        // Winner Team
                         Surface(
                             color = MaterialTheme.colorScheme.primaryContainer,
                             shape = MaterialTheme.shapes.small
@@ -170,7 +165,7 @@ private fun HistoryCard(
                             )
                         }
 
-                        // Nhãn loại hình thi đấu
+                        // Tournament Type Label
                         Surface(
                             color = if (history.notes == "Knockout") 
                                 MaterialTheme.colorScheme.tertiaryContainer 
@@ -179,7 +174,7 @@ private fun HistoryCard(
                             shape = MaterialTheme.shapes.small
                         ) {
                             Text(
-                                history.notes ?: "Vòng tròn",
+                                history.notes ?: "Round Robin",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Medium,
                                 color = if (history.notes == "Knockout")
@@ -193,7 +188,7 @@ private fun HistoryCard(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Ngày thi đấu
+                    // Tournament Date
                     Text(
                         formatDate(history.createdAt),
                         style = MaterialTheme.typography.bodySmall,
@@ -202,11 +197,11 @@ private fun HistoryCard(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Số đội và số trận
+                    // Number of Teams and Matches
                     val infoText = try {
                         val teams = Json.decodeFromString<List<List<String>>>(history.teams)
                         val results = Json.decodeFromString<List<Int?>>(history.results)
-                        "${teams.size} đội • ${results.size} trận"
+                        "${teams.size} teams • ${results.size} matches"
                     } catch (e: Exception) {
                         "N/A"
                     }
@@ -218,11 +213,11 @@ private fun HistoryCard(
                     )
                 }
 
-                // Nút xóa
+                // Delete Button
                 IconButton(onClick = onDelete) {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Xóa",
+                        contentDescription = "Delete",
                         tint = MaterialTheme.colorScheme.error
                     )
                 }

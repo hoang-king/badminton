@@ -44,7 +44,7 @@ fun BadmintonScoreScreen(
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
+                            contentDescription = "Back",
                             tint = Color.Black
                         )
                     }
@@ -60,14 +60,14 @@ fun BadmintonScoreScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // ==== HÀNG TRÊN: NÚT RESET VÀ NÚT TĂNG/GIẢM ĐIỂM NGANG ====
+            // ==== TOP ROW: RESET BUTTON AND INCREMENT/DECREMENT SCORE BUTTONS HORIZONTALLY ====
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Ô GIẢM ĐIỂM BÊN TRÁI
+                // DECREASE SCORE BUTTON LEFT
                 ScoreButton(
                     symbol = "-",
                     onClick = { scoreViewModel.decrementA() },
@@ -76,7 +76,7 @@ fun BadmintonScoreScreen(
                     bgColor = Color(0xFF90CAF9)
                 )
 
-                // NÚT RESET GAME LỚN
+                // LARGE RESET GAME BUTTON
                 Box(
                     modifier = Modifier
                         .weight(4f)
@@ -93,7 +93,7 @@ fun BadmintonScoreScreen(
                     )
                 }
 
-                // Ô GIẢM ĐIỂM BÊN PHẢI
+                // DECREASE SCORE BUTTON RIGHT
                 ScoreButton(
                     symbol = "-",
                     onClick = { scoreViewModel.decrementB() },
@@ -119,13 +119,13 @@ fun BadmintonScoreScreen(
                 }
             }
 
-            // ==== HÀNG DƯỚI: THẺ ĐIỂM VÀ NÚT TĂNG ĐIỂM NGANG ====
+            // ==== BOTTOM ROW: SCORE CARDS AND INCREMENT SCORE BUTTONS HORIZONTALLY ====
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(3f)
             ) {
-                // Ô TĂNG ĐIỂM BÊN TRÁI
+                // INCREASE SCORE BUTTON LEFT
                 ScoreButton(
                     symbol = "+",
                     onClick = { scoreViewModel.incrementA() },
@@ -134,7 +134,7 @@ fun BadmintonScoreScreen(
                     bgColor = Color(0xFF90CAF9)
                 )
 
-                // THẺ ĐIỂM PLAYER 1
+                // PLAYER 1 SCORE CARD
                 PlayerScoreCard(
                     playerName = "Player 1",
                     score = scoreA,
@@ -142,7 +142,7 @@ fun BadmintonScoreScreen(
                     color = Color(0xFF90CAF9)
                 )
 
-                // THẺ ĐIỂM PLAYER 2
+                // PLAYER 2 SCORE CARD
                 PlayerScoreCard(
                     playerName = "Player 2",
                     score = scoreB,
@@ -150,7 +150,7 @@ fun BadmintonScoreScreen(
                     color = Color(0xFF90CAF9)
                 )
 
-                // Ô TĂNG ĐIỂM BÊN PHẢI
+                // INCREASE SCORE BUTTON RIGHT
                 ScoreButton(
                     symbol = "+",
                     onClick = { scoreViewModel.incrementB() },
@@ -163,7 +163,7 @@ fun BadmintonScoreScreen(
     }
 }
 
-// Composable để tạo các ô điểm lớn
+// Composable to create large score cards
 @Composable
 fun PlayerScoreCard(
     playerName: String,
@@ -180,7 +180,7 @@ fun PlayerScoreCard(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Tên người chơi
+        // Player name
         Text(
             text = playerName,
             color = Color.Black,
@@ -188,7 +188,7 @@ fun PlayerScoreCard(
             fontSize = 24.sp,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        // Điểm số lớn
+        // Large score
         Text(
             text = "$score",
             color = Color.Black,
@@ -199,7 +199,7 @@ fun PlayerScoreCard(
     }
 }
 
-// Composable cho các nút + và -
+// Composable for + and - buttons
 @Composable
 fun ScoreButton(
     symbol: String,

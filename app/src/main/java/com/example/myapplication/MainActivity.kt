@@ -12,7 +12,7 @@ import com.example.myapplication.presentation.bracket.BracketScreen
 import com.example.myapplication.presentation.bracket.BracketViewModel
 import com.example.myapplication.presentation.circle.CircleScreen
 import com.example.myapplication.presentation.circle.CircleViewModel
-import com.example.myapplication.HistoryScreen
+import com.example.myapplication.presentation.history.HistoryScreen
 import com.example.myapplication.presentation.game.GameScreen
 import com.example.myapplication.presentation.game.GameViewModel
 import com.example.myapplication.presentation.score.BadmintonScoreScreen

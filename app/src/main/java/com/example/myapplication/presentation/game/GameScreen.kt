@@ -37,14 +37,14 @@ fun GameScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Quản lý trận đấu",
+                        "Match Management",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                 },
                 actions = {
                     IconButton(onClick = { showTopMenu = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Menu chính")
+                        Icon(Icons.Default.MoreVert, contentDescription = "Main menu")
                     }
                     DropdownMenu(
                         expanded = showTopMenu,
@@ -86,7 +86,7 @@ fun GameScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // Card nhập danh sách người chơi
+            // Card for entering player list
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -107,13 +107,13 @@ fun GameScreen(
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            "Danh sách người chơi",
+                            "Player List",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.weight(1f)
                         )
                         
-                        // Nút Reset
+                        // Reset Button
                         TextButton(
                             onClick = { gameViewModel.resetAll() },
                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -130,15 +130,15 @@ fun GameScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(140.dp),
-                        placeholder = { Text("Nhập tên người chơi (Ví dụ:\n- Nguyễn Văn A\n- Trần Thị B)") },
+                        placeholder = { Text("Enter player names (Example:\n- Nguyen Van A\n- Tran Thi B)") },
                         shape = RoundedCornerShape(12.dp)
                     )
 
-                    // RANDOM ĐỘI - Full Width
+                    // RANDOM TEAM - Full Width
                     Button(
                         onClick = { 
                             gameViewModel.randomTeams()
-                            keyboardController?.hide() // Ẩn bàn phím
+                            keyboardController?.hide() // Hide keyboard
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
@@ -149,12 +149,12 @@ fun GameScreen(
                     ) {
                         Icon(Icons.Default.Shuffle, null, Modifier.size(20.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Random đội")
+                        Text("Random Team")
                     }
                 }
             }
 
-            // Hiển thị danh sách đội
+            // Display team list
             if (teams.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -171,7 +171,7 @@ fun GameScreen(
                         ) {
                             Icon(Icons.Default.Group, null, tint = MaterialTheme.colorScheme.primary)
                             Text(
-                                "Các đội đã tạo (${teams.size})",
+                                "Created Teams (${teams.size})",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.weight(1f)
@@ -180,7 +180,7 @@ fun GameScreen(
                             // Menu Button moved here
                             Box {
                                 IconButton(onClick = { showTeamsMenu = true }) {
-                                    Icon(Icons.Default.MoreVert, contentDescription = "Menu đội")
+                                    Icon(Icons.Default.MoreVert, contentDescription = "Team menu")
                                 }
                                 DropdownMenu(
                                     expanded = showTeamsMenu,
@@ -214,7 +214,7 @@ fun GameScreen(
                                                 putExtra(Intent.EXTRA_TEXT, message)
                                                 type = "text/plain"
                                             }
-                                            val shareIntent = Intent.createChooser(sendIntent, "Chia sẻ với")
+                                            val shareIntent = Intent.createChooser(sendIntent, "Share with")
                                             context.startActivity(shareIntent)
                                         }
                                     )
@@ -269,13 +269,13 @@ fun TeamCard(
                     }
                 }
                 Text(
-                    "Đội $teamNumber",
+                    "Team $teamNumber",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    "(${players.size} người)",
+                    "(${players.size} players)",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
