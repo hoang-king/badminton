@@ -105,7 +105,7 @@ fun HistoryScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Hãy hoàn thành vòng tròn để lưu lịch sử.",
+                            "Hãy hoàn thành trận đấu để lưu lịch sử.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
