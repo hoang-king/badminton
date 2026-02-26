@@ -1,58 +1,143 @@
 package com.example.myapplication.presentation.theme
 
 import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+private val SportsDarkColorScheme = darkColorScheme(
+    // Primary: Neon Green
+    primary = NeonGreen,
+    onPrimary = DarkOnPrimary,
+    primaryContainer = NeonGreenContainer,
+    onPrimaryContainer = OnNeonGreenContainer,
+
+    // Secondary: Cyan
+    secondary = Cyan,
+    onSecondary = DarkOnPrimary,
+    secondaryContainer = CyanContainer,
+    onSecondaryContainer = OnCyanContainer,
+
+    // Tertiary: Electric Blue
+    tertiary = ElectricBlue,
+    onTertiary = DarkOnPrimary,
+    tertiaryContainer = ElectricBlueContainer,
+    onTertiaryContainer = OnElectricBlueContainer,
+
+    // Background & Surface
+    background = DarkBackground,
+    onBackground = LightText,
+    surface = DarkSurface,
+    onSurface = LightText,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = LightTextSecondary,
+
+    // Error
+    error = ErrorRed,
+    onError = Color.White,
+    errorContainer = ErrorContainer,
+    onErrorContainer = OnErrorContainer,
+
+    // Outline
+    outline = DarkOutline,
+    outlineVariant = DarkOutlineVariant,
+
+    // Inverse
+    inverseSurface = LightText,
+    inverseOnSurface = DarkBackground,
+    inversePrimary = NeonGreenDark,
+
+    // Surface tint
+    surfaceTint = NeonGreen
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+// ===== Shape System =====
+val SportShapes = Shapes(
+    extraSmall = RoundedCornerShape(6.dp),
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(14.dp),
+    large = RoundedCornerShape(18.dp),
+    extraLarge = RoundedCornerShape(24.dp)
+)
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+// ===== Gradient Presets =====
+val NeonGradient = Brush.horizontalGradient(
+    colors = listOf(NeonGreen, Cyan)
+)
+
+val NeonGradientVertical = Brush.verticalGradient(
+    colors = listOf(NeonGreen, Cyan)
+)
+
+val CoolGradient = Brush.horizontalGradient(
+    colors = listOf(Cyan, ElectricBlue)
+)
+
+val CoolGradientVertical = Brush.verticalGradient(
+    colors = listOf(Cyan, ElectricBlue)
+)
+
+val FireGradient = Brush.horizontalGradient(
+    colors = listOf(SportAmber, ErrorRed)
+)
+
+val SurfaceGradient = Brush.verticalGradient(
+    colors = listOf(DarkSurface, DarkSurfaceVariant)
+)
+
+val TopBarGradient = Brush.horizontalGradient(
+    colors = listOf(DarkSurface, DarkSurfaceVariant, DarkSurface)
+)
+
+val CardGlowBorder = Brush.horizontalGradient(
+    colors = listOf(
+        NeonGreen.copy(alpha = 0.5f),
+        Cyan.copy(alpha = 0.3f),
+        ElectricBlue.copy(alpha = 0.5f)
+    )
+)
+
+val CardGlowBorderSubtle = Brush.horizontalGradient(
+    colors = listOf(
+        NeonGreen.copy(alpha = 0.2f),
+        Cyan.copy(alpha = 0.15f),
+        ElectricBlue.copy(alpha = 0.2f)
+    )
 )
 
 @Composable
 fun MyApplicationTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    val colorScheme = SportsDarkColorScheme
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    // Dark status bar & navigation bar
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = DarkBackground.toArgb()
+            window.navigationBarColor = DarkBackground.toArgb()
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = false
+                isAppearanceLightNavigationBars = false
+            }
+        }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = SportShapes,
         content = content
     )
 }

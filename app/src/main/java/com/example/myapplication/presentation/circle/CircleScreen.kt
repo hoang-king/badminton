@@ -1,25 +1,37 @@
 package com.example.myapplication.presentation.circle
 
 import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SportsTennis
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.myapplication.domain.model.Match
 import com.example.myapplication.presentation.game.GameViewModel
+import com.example.myapplication.presentation.theme.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
@@ -36,7 +48,6 @@ fun CircleScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Pass teams from GameViewModel to CircleViewModel
     LaunchedEffect(teams) {
         if (teams.isNotEmpty()) {
             circleViewModel.setTeams(teams)
@@ -46,28 +57,44 @@ fun CircleScreen(
     // Dialog save history
     if (showSaveDialog) {
         AlertDialog(
+            containerColor = DarkSurfaceVariant,
+            titleContentColor = NeonGreen,
+            textContentColor = LightText,
             onDismissRequest = { circleViewModel.closeSaveDialog() },
-            title = { Text("Save Result") },
+            title = {
+                Text(
+                    "SAVE RESULT",
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp
+                )
+            },
             text = { Text("Do you want to save the result to history?") },
             confirmButton = {
-                Button(onClick = {
-                    scope.launch {
-                        circleViewModel.saveToHistory(context, matches, teams)
-                        circleViewModel.closeSaveDialog()
-                        // Navigate back to match management screen
-                        navController.navigate("game") {
-                            popUpTo("game") { inclusive = true }
+                Button(
+                    onClick = {
+                        scope.launch {
+                            circleViewModel.saveToHistory(context, matches, teams)
+                            circleViewModel.closeSaveDialog()
+                            navController.navigate("game") {
+                                popUpTo("game") { inclusive = true }
+                            }
                         }
-                    }
-                }) {
-                    Text("Save")
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = NeonGreen,
+                        contentColor = DarkOnPrimary
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("SAVE", fontWeight = FontWeight.Black, letterSpacing = 0.5.sp)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { circleViewModel.closeSaveDialog() }) {
-                    Text("Cancel")
+                    Text("Cancel", color = LightTextSecondary)
                 }
-            }
+            },
+            shape = RoundedCornerShape(20.dp)
         )
     }
 
@@ -81,23 +108,47 @@ fun CircleScreen(
     }
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(NeonGreen, Cyan)
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.SportsTennis,
+                                contentDescription = null,
+                                tint = DarkOnPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                         Text(
-                            "Round Robin ",
+                            "ROUND ROBIN",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Black,
+                            color = LightText,
+                            letterSpacing = 2.sp
                         )
-
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = LightText
                         )
                     }
                 },
@@ -106,16 +157,17 @@ fun CircleScreen(
                         IconButton(onClick = { shareSchedule() }) {
                             Icon(
                                 Icons.Filled.Share,
-                                contentDescription = "Share tournament schedule"
+                                contentDescription = "Share",
+                                tint = Cyan
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = DarkSurface,
+                    titleContentColor = LightText,
+                    navigationIconContentColor = LightText,
+                    actionIconContentColor = Cyan
                 )
             )
         }
@@ -130,36 +182,46 @@ fun CircleScreen(
                 Card(
                     modifier = Modifier
                         .padding(32.dp)
-                        .fillMaxWidth(0.8f)
-                        .fillMaxHeight(0.5f), // Shrink card to 80% width and center
+                        .fillMaxWidth(0.85f),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
+                        containerColor = DarkSurfaceVariant
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                    shape = RoundedCornerShape(20.dp)
                 ) {
                     Column(
                         modifier = Modifier
-                            .fillMaxHeight()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(DarkSurfaceHigh),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Group,
+                                contentDescription = null,
+                                tint = LightTextSecondary.copy(alpha = 0.5f),
+                                modifier = Modifier.size(40.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
                         Text(
-                            "⚠️",
-                            style = MaterialTheme.typography.displayMedium
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "No Teams",
+                            "NO TEAMS",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onErrorContainer
+                            fontWeight = FontWeight.Black,
+                            color = LightText,
+                            letterSpacing = 1.5.sp
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Please go back to the main screen and create teams first.",
+                            "Please go back and create teams first.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer
+                            color = LightTextSecondary,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
@@ -172,35 +234,54 @@ fun CircleScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
             ) {
-                // Overview Information
+                // ===== Overview - Gradient Stats =====
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 1.dp,
+                            brush = CardGlowBorderSubtle,
+                            shape = RoundedCornerShape(18.dp)
+                        ),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        containerColor = DarkSurface
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                    shape = RoundedCornerShape(18.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                            .padding(24.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         StatCard(
                             value = "${circleViewModel.getTotalTeams()}",
-                            label = "Teams",
-                            icon = "👥"
+                            label = "TEAMS",
+                            accentColor = Cyan
                         )
 
-                        VerticalDivider(
-                            modifier = Modifier.height(60.dp),
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.3f)
+                        // Vertical divider
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(60.dp)
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            DarkOutline.copy(alpha = 0f),
+                                            NeonGreen.copy(alpha = 0.4f),
+                                            DarkOutline.copy(alpha = 0f)
+                                        )
+                                    )
+                                )
                         )
 
                         StatCard(
                             value = "${circleViewModel.getTotalMatches()}",
-                            label = "Matches",
-                            icon = "🏸"
+                            label = "MATCHES",
+                            accentColor = NeonGreen
                         )
                     }
                 }
@@ -208,24 +289,45 @@ fun CircleScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Match list title
-                Text(
-                    "📋 Match list:",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(RoundedCornerShape(7.dp))
+                            .background(NeonGreenContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.SportsTennis,
+                            contentDescription = null,
+                            tint = NeonGreen,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Text(
+                        "MATCH LIST",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                        color = LightText,
+                        letterSpacing = 1.5.sp
+                    )
+                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Match list
-                matches.forEach { match ->
+                matches.forEachIndexed { index, match ->
                     MatchCard(
                         match = match,
+                        matchIndex = index,
                         onWinnerSelected = { winnerIndex ->
                             circleViewModel.setMatchWinner(match.matchNumber, winnerIndex)
                         }
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                 }
             }
         }
@@ -236,118 +338,158 @@ fun CircleScreen(
 private fun StatCard(
     value: String,
     label: String,
-    icon: String
+    accentColor: androidx.compose.ui.graphics.Color
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(8.dp)
     ) {
         Text(
-            icon,
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
             value,
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSecondaryContainer
+            style = MaterialTheme.typography.displayMedium,
+            fontWeight = FontWeight.Black,
+            color = accentColor
         )
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+            style = MaterialTheme.typography.labelMedium,
+            color = LightTextSecondary,
+            letterSpacing = 1.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
 
 @Composable
-private fun MatchCard(match: Match, onWinnerSelected: (Int?) -> Unit) {
+private fun MatchCard(match: Match, matchIndex: Int, onWinnerSelected: (Int?) -> Unit) {
+    val matchColors = listOf(
+        listOf(NeonGreen, Cyan),
+        listOf(Cyan, ElectricBlue),
+        listOf(ElectricBlue, NeonGreen),
+        listOf(SportAmber, NeonGreen)
+    )
+    val colorPair = matchColors[matchIndex % matchColors.size]
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                brush = Brush.horizontalGradient(
+                    colors = colorPair.map { it.copy(alpha = 0.2f) }
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            containerColor = DarkSurface
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Match number badge
+            // Match number badge - gradient
             Surface(
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shape = MaterialTheme.shapes.small
+                color = colorPair[0].copy(alpha = 0.15f),
+                shape = RoundedCornerShape(10.dp)
             ) {
                 Text(
-                    "Trận ${match.matchNumber}",
+                    "MATCH ${match.matchNumber}",
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    fontWeight = FontWeight.Black,
+                    color = colorPair[0],
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Đội 1
+                // Team 1
                 TeamColumn(
                     teamNumber = match.team1Index + 1,
                     players = match.team1,
                     isWinner = match.winnerIndex == 0,
                     isLoser = match.winnerIndex == 1,
-                    onClick = { 
+                    accentColor = colorPair[0],
+                    onClick = {
                         if (match.winnerIndex == 0) onWinnerSelected(null) else onWinnerSelected(0)
                     },
                     modifier = Modifier.weight(1f)
                 )
 
-                // VS divider
-                Surface(
-                    color = MaterialTheme.colorScheme.tertiaryContainer,
-                    shape = MaterialTheme.shapes.small
+                // VS badge
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    ElectricBlueContainer,
+                                    DarkSurfaceHigh
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         "VS",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Black,
+                        color = ElectricBlue,
+                        letterSpacing = 1.sp
                     )
                 }
 
-                // Đội 2
+                // Team 2
                 TeamColumn(
                     teamNumber = match.team2Index + 1,
                     players = match.team2,
                     isWinner = match.winnerIndex == 1,
                     isLoser = match.winnerIndex == 0,
-                    onClick = { 
+                    accentColor = colorPair[1],
+                    onClick = {
                         if (match.winnerIndex == 1) onWinnerSelected(null) else onWinnerSelected(1)
                     },
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            // Hiển thị thông báo kết quả
+            // Winner result
             if (match.winnerIndex != null) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = MaterialTheme.shapes.small,
+                    color = NeonGreenContainer,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        "✓ Đội ${if (match.winnerIndex == 0) match.team1Index + 1 else match.team2Index + 1} thắng",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.padding(12.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = NeonGreen,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            "TEAM ${if (match.winnerIndex == 0) match.team1Index + 1 else match.team2Index + 1} WINS",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Black,
+                            color = NeonGreen,
+                            letterSpacing = 1.sp
+                        )
+                    }
                 }
             }
         }
@@ -360,39 +502,53 @@ private fun TeamColumn(
     players: List<String>,
     isWinner: Boolean = false,
     isLoser: Boolean = false,
+    accentColor: androidx.compose.ui.graphics.Color = Cyan,
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
             .clickable(onClick = onClick)
-            .alpha(if (isLoser) 0.4f else 1f)
+            .alpha(if (isLoser) 0.35f else 1f)
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Team badge
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(
+                    if (isWinner)
+                        Brush.linearGradient(colors = listOf(NeonGreen, Cyan))
+                    else
+                        Brush.linearGradient(colors = listOf(DarkSurfaceHigh, DarkSurfaceBright))
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "$teamNumber",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Black,
+                color = if (isWinner) DarkOnPrimary else accentColor
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
-            "Team $teamNumber",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = if (isWinner) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
+            "TEAM $teamNumber",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Black,
+            color = if (isWinner) NeonGreen else accentColor,
+            letterSpacing = 0.5.sp
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         players.forEach { player ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "•",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    player,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
+            Text(
+                player,
+                style = MaterialTheme.typography.bodySmall,
+                color = LightText,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -403,7 +559,7 @@ private fun buildScheduleText(matches: List<Match>, teams: List<List<String>>): 
     builder.append("=" .repeat(50)).append("\n\n")
     builder.append("👥 Teams: ${teams.size}\n")
     builder.append("🏸 Total Matches: ${matches.size}\n\n")
-    
+
     matches.forEach { match ->
         builder.append("Match ${match.matchNumber}:\n")
         builder.append("  Team ${match.team1Index + 1}: ${match.team1.joinToString(", ")}\n")
@@ -411,6 +567,6 @@ private fun buildScheduleText(matches: List<Match>, teams: List<List<String>>): 
         builder.append("  Team ${match.team2Index + 1}: ${match.team2.joinToString(", ")}\n")
         builder.append("\n")
     }
-    
+
     return builder.toString()
 }

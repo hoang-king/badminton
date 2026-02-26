@@ -49,6 +49,13 @@ class GameViewModel : ViewModel() {
         _teams.value = randomTeamsUseCase(playerInput.value.text)
     }
 
+    fun sortTeams() {
+        _teams.value = _teams.value.sortedWith(
+            compareByDescending<List<String>> { it.size }
+                .thenBy { it.firstOrNull() ?: "" }
+        )
+    }
+
     fun resetAll() {
         _playerInput.value = TextFieldValue("")
         _teams.value = emptyList()

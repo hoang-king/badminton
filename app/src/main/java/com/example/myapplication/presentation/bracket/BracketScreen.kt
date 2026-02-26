@@ -5,23 +5,27 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.airbnb.lottie.compose.LottieAnimation
@@ -30,6 +34,7 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.myapplication.R
 import com.example.myapplication.domain.model.BracketMatch
 import com.example.myapplication.presentation.game.GameViewModel
+import com.example.myapplication.presentation.theme.*
 
 /**
  * Main Bracket Screen
@@ -55,38 +60,71 @@ fun BracketScreen(
     // Dialog save history
     if (showSaveDialog) {
         AlertDialog(
+            containerColor = DarkSurfaceVariant,
+            titleContentColor = NeonGreen,
+            textContentColor = LightText,
             onDismissRequest = { bracketViewModel.closeSaveDialog() },
-            title = { Text("Congratulations Champion!") },
-            text = { 
+            title = {
+                Text(
+                    "CHAMPION!",
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 2.sp
+                )
+            },
+            text = {
                 val champion = bracketViewModel.getChampion()
                 Column {
-                    Text("Do you want to save this tournament result to history?")
+                    Text("Save this tournament result to history?")
                     if (champion != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Winning Team: ${champion.joinToString(", ")}",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Surface(
+                            color = NeonGreenContainer,
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.EmojiEvents,
+                                    contentDescription = null,
+                                    tint = NeonGreen,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    champion.joinToString(", "),
+                                    fontWeight = FontWeight.Black,
+                                    color = NeonGreen
+                                )
+                            }
+                        }
                     }
                 }
             },
             confirmButton = {
-                Button(onClick = {
-                    bracketViewModel.saveToHistory(context)
-                }) {
-                    Text("Save")
+                Button(
+                    onClick = { bracketViewModel.saveToHistory(context) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = NeonGreen,
+                        contentColor = DarkOnPrimary
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("SAVE", fontWeight = FontWeight.Black, letterSpacing = 0.5.sp)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { bracketViewModel.closeSaveDialog() }) {
-                    Text("Cancel")
+                    Text("Cancel", color = LightTextSecondary)
                 }
-            }
+            },
+            shape = RoundedCornerShape(20.dp)
         )
     }
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             BracketTopBar(
                 hasTeams = teams.isNotEmpty(),
@@ -99,7 +137,7 @@ fun BracketScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
+                .background(DarkBackground)
         ) {
             if (teams.isEmpty()) {
                 EmptyState()
@@ -125,17 +163,43 @@ private fun BracketTopBar(
 ) {
     TopAppBar(
         title = {
-            Text(
-                "Knockout Bracket",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(ElectricBlue, Cyan)
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.EmojiEvents,
+                        contentDescription = null,
+                        tint = DarkOnPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Text(
+                    "KNOCKOUT",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    color = LightText,
+                    letterSpacing = 2.sp
+                )
+            }
         },
         navigationIcon = {
             IconButton(onClick = onBackClick) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
+                    contentDescription = "Back",
+                    tint = LightText
                 )
             }
         },
@@ -144,16 +208,17 @@ private fun BracketTopBar(
                 IconButton(onClick = onResetClick) {
                     Icon(
                         Icons.Default.Refresh,
-                        contentDescription = "Reset"
+                        contentDescription = "Reset",
+                        tint = Cyan
                     )
                 }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            containerColor = DarkSurface,
+            titleContentColor = LightText,
+            navigationIconContentColor = LightText,
+            actionIconContentColor = Cyan
         )
     )
 }
@@ -170,39 +235,45 @@ private fun EmptyState() {
         Card(
             modifier = Modifier
                 .padding(32.dp)
-                .fillMaxWidth(0.8f)
-                .fillMaxHeight(0.5f), // Thu nhỏ card còn 80% chiều rộng và vẫn căn giữa
+                .fillMaxWidth(0.85f),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer
+                containerColor = DarkSurfaceVariant
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+            shape = RoundedCornerShape(20.dp)
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(
-                    imageVector = Icons.Default.Error,
-                    contentDescription = "No teams",
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(DarkSurfaceHigh),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Group,
+                        contentDescription = null,
+                        tint = LightTextSecondary.copy(alpha = 0.5f),
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(20.dp))
                 Text(
-
-                    "No teams",
+                    "NO TEAMS",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    fontWeight = FontWeight.Black,
+                    color = LightText,
+                    letterSpacing = 1.5.sp,
+                    textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Please create teams before starting",
-                    color = MaterialTheme.colorScheme.onErrorContainer,
+                Text(
+                    "Please create teams before starting",
+                    color = LightTextSecondary,
                     textAlign = TextAlign.Center
                 )
             }
@@ -218,7 +289,6 @@ private fun BracketContent(
     totalRounds: Int,
     bracketViewModel: BracketViewModel
 ) {
-    // ✅ Collect matches state
     val matches by bracketViewModel.matches.collectAsState()
     val isFinalWon by bracketViewModel.isFinalWon.collectAsState()
 
@@ -228,7 +298,6 @@ private fun BracketContent(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-
         Row(
             horizontalArrangement = Arrangement.spacedBy(32.dp)
         ) {
@@ -246,10 +315,10 @@ private fun BracketContent(
             }
         }
     }
-
 }
+
 /**
- * Bracket Round Column - Vertical list of matches
+ * Bracket Round Column
  */
 @Composable
 private fun BracketRoundColumn(
@@ -259,21 +328,17 @@ private fun BracketRoundColumn(
     isFinalWon: Boolean,
     onTeamClick: (Int, Int) -> Unit
 ) {
-    // Spacing theo cấp số 2: 16, 32, 64, 128...
     val baseSpacing = 16
-    val multiplier = 1 shl round // 2^round
+    val multiplier = 1 shl round
     val spacing = (baseSpacing * multiplier).dp
 
     Column(
         modifier = Modifier.width(200.dp),
         verticalArrangement = Arrangement.spacedBy(spacing)
     ) {
-        // Round header
         RoundHeader(round = round, totalRounds = totalRounds)
-
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Matches with spacing to align according to binary tree
         matches.forEach { match ->
             if (round > 0) {
                 Spacer(modifier = Modifier.height((spacing.value / 2).dp))
@@ -296,31 +361,50 @@ private fun BracketRoundColumn(
 }
 
 /**
- * Round Header
+ * Round Header - Gradient
  */
 @Composable
 private fun RoundHeader(round: Int, totalRounds: Int) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.primaryContainer,
-        shape = RoundedCornerShape(8.dp)
+    val headerColors = when {
+        round == totalRounds - 1 -> listOf(SportAmber, NeonGreen)
+        round == totalRounds - 2 -> listOf(NeonGreen, Cyan)
+        else -> listOf(Cyan, ElectricBlue)
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(
+                Brush.horizontalGradient(
+                    colors = headerColors.map { it.copy(alpha = 0.2f) }
+                )
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.horizontalGradient(
+                    colors = headerColors.map { it.copy(alpha = 0.3f) }
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = when {
-                round == totalRounds - 1 -> "Final"
-                round == totalRounds - 2 -> "Semi-Final"
-                round == totalRounds - 3 -> "Quarter-Final"
-                else -> "Round ${round + 1}"
+                round == totalRounds - 1 -> "🏆 FINAL"
+                round == totalRounds - 2 -> "SEMI-FINAL"
+                round == totalRounds - 3 -> "QUARTER-FINAL"
+                else -> "ROUND ${round + 1}"
             },
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            fontWeight = FontWeight.Black,
+            color = headerColors[0],
             modifier = Modifier.padding(12.dp),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            letterSpacing = 1.sp
         )
     }
 }
-
 
 @Composable
 private fun MatchCard(
@@ -329,7 +413,6 @@ private fun MatchCard(
     isFinalWon: Boolean = false,
     onTeamClick: (Int) -> Unit
 ) {
-    // ✅ Hide card if both teams are null
     if (match.team1 == null && match.team2 == null) {
         Spacer(modifier = Modifier.height(100.dp))
         return
@@ -337,15 +420,21 @@ private fun MatchCard(
 
     Box(modifier = Modifier.fillMaxWidth()) {
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = if (isFinal && isFinalWon) NeonGreen.copy(alpha = 0.3f) else DarkOutline,
+                    shape = RoundedCornerShape(12.dp)
+                ),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = DarkSurface
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            shape = RoundedCornerShape(8.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+            shape = RoundedCornerShape(12.dp)
         ) {
             Column(
-                modifier = Modifier.padding(8.dp),
+                modifier = Modifier.padding(10.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 // Team 1
@@ -361,10 +450,20 @@ private fun MatchCard(
 
                 // Divider
                 if (match.team1 != null && match.team2 != null) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                        thickness = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp)
+                            .height(1.dp)
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        DarkOutline.copy(alpha = 0f),
+                                        NeonGreen.copy(alpha = 0.3f),
+                                        DarkOutline.copy(alpha = 0f)
+                                    )
+                                )
+                            )
                     )
                 }
 
@@ -381,14 +480,15 @@ private fun MatchCard(
             }
         }
 
-        // Fire animation for final match winner
+        // Fire animation
         if (isFinal && isFinalWon) {
             FireAnimation(modifier = Modifier.align(Alignment.Center))
         }
     }
 }
+
 /**
- * Team Box - Clickable team display
+ * Team Box
  */
 @Composable
 private fun TeamBox(
@@ -399,60 +499,80 @@ private fun TeamBox(
     onClick: () -> Unit
 ) {
     val backgroundColor = when {
-        isWinner -> MaterialTheme.colorScheme.primaryContainer
-        isClickable -> MaterialTheme.colorScheme.surfaceVariant
-        else -> MaterialTheme.colorScheme.surface
-    }
-
-    val borderColor = when {
-        isWinner -> MaterialTheme.colorScheme.primary
-        else -> Color.Transparent
+        isWinner -> NeonGreenContainer
+        isClickable -> DarkSurfaceVariant
+        else -> DarkSurface
     }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(backgroundColor)
-            .border(
-                width = if (isWinner) 2.dp else 0.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(6.dp)
+            .then(
+                if (isWinner) Modifier.border(
+                    width = 1.dp,
+                    brush = Brush.horizontalGradient(listOf(NeonGreen, Cyan)),
+                    shape = RoundedCornerShape(8.dp)
+                ) else Modifier
             )
             .clickable(enabled = isClickable) { onClick() }
-            .padding(10.dp)
+            .padding(12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Team ${(teamIndex ?: 0) + 1}",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isWinner) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    }
-                )
-                team.forEach { player ->
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Team number badge
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(RoundedCornerShape(7.dp))
+                        .background(
+                            if (isWinner)
+                                Brush.linearGradient(listOf(NeonGreen, Cyan))
+                            else
+                                Brush.linearGradient(listOf(DarkSurfaceHigh, DarkSurfaceBright))
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
-                        text = player,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface
+                        text = "${(teamIndex ?: 0) + 1}",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Black,
+                        color = if (isWinner) DarkOnPrimary else LightTextSecondary
                     )
+                }
+                Column {
+                    Text(
+                        text = "TEAM ${(teamIndex ?: 0) + 1}",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Black,
+                        color = if (isWinner) NeonGreen else LightText,
+                        letterSpacing = 0.5.sp
+                    )
+                    team.forEach { player ->
+                        Text(
+                            text = player,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (isWinner) LightText else LightTextSecondary
+                        )
+                    }
                 }
             }
 
             if (isWinner) {
-                Text(
-                    text = "✓",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                Icon(
+                    Icons.Default.EmojiEvents,
+                    contentDescription = null,
+                    tint = NeonGreen,
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
@@ -460,12 +580,12 @@ private fun TeamBox(
 }
 
 /**
- * Fire Animation for final match
+ * Fire Animation
  */
 @Composable
 private fun FireAnimation(modifier: Modifier = Modifier) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.fire))
-    
+
     LottieAnimation(
         composition = composition,
         modifier = modifier

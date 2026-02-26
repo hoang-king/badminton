@@ -1,22 +1,32 @@
 package com.example.myapplication.presentation.history
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.myapplication.presentation.history.HistoryViewModel
 import com.example.myapplication.data.RoundRobinHistoryEntity
+import com.example.myapplication.presentation.theme.*
 import kotlinx.serialization.json.Json
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,30 +45,54 @@ fun HistoryScreen(
     val histories by historyViewModel.histories.collectAsState()
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(Cyan, ElectricBlue)
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.History,
+                                contentDescription = null,
+                                tint = DarkOnPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                         Text(
-                            "Tournament History",
+                            "HISTORY",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Black,
+                            color = LightText,
+                            letterSpacing = 2.sp
                         )
-
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = LightText
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = DarkSurface,
+                    titleContentColor = LightText,
+                    navigationIconContentColor = LightText
                 )
             )
         }
@@ -73,36 +107,46 @@ fun HistoryScreen(
                 Card(
                     modifier = Modifier
                         .padding(32.dp)
-                        .fillMaxWidth(0.8f)
-                        .fillMaxHeight(0.5f),
+                        .fillMaxWidth(0.85f),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
+                        containerColor = DarkSurfaceVariant
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                    shape = RoundedCornerShape(20.dp)
                 ) {
                     Column(
                         modifier = Modifier
-                            .fillMaxHeight()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // Animated empty icon
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(DarkSurfaceHigh),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.History,
+                                contentDescription = null,
+                                tint = LightTextSecondary.copy(alpha = 0.5f),
+                                modifier = Modifier.size(40.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
                         Text(
-                            "📭",
-                            style = MaterialTheme.typography.displayMedium
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "No History",
+                            "NO HISTORY",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onErrorContainer
+                            fontWeight = FontWeight.Black,
+                            color = LightText,
+                            letterSpacing = 1.5.sp
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "Complete a match to save history.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer
+                            color = LightTextSecondary
                         )
                     }
                 }
@@ -112,8 +156,8 @@ fun HistoryScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 items(histories) { history ->
                     HistoryCard(
@@ -131,95 +175,145 @@ private fun HistoryCard(
     history: RoundRobinHistoryEntity,
     onDelete: () -> Unit
 ) {
+    val isKnockout = history.notes == "Knockout"
+    val accentColors = if (isKnockout)
+        listOf(ElectricBlue, Cyan)
+    else
+        listOf(NeonGreen, Cyan)
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                brush = Brush.horizontalGradient(
+                    colors = accentColors.map { it.copy(alpha = 0.25f) }
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            containerColor = DarkSurface
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Row(modifier = Modifier.fillMaxWidth()) {
+            // Gradient left accent bar
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.verticalGradient(colors = accentColors),
+                        shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
+                    )
+            )
+
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        // Winner Team
-                        Surface(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = MaterialTheme.shapes.small
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        // Top row: badges
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(
-                                "🏆 ${history.winnerTeam ?: "N/A"}",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                            )
-                        }
+                            // Winner badge - Gradient
+                            Surface(
+                                color = NeonGreenContainer,
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.EmojiEvents,
+                                        contentDescription = null,
+                                        tint = NeonGreen,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        history.winnerTeam ?: "N/A",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Black,
+                                        color = NeonGreen
+                                    )
+                                }
+                            }
 
-                        // Tournament Type Label
-                        Surface(
-                            color = if (history.notes == "Knockout") 
-                                MaterialTheme.colorScheme.tertiaryContainer 
-                            else 
-                                MaterialTheme.colorScheme.secondaryContainer,
-                            shape = MaterialTheme.shapes.small
-                        ) {
-                            Text(
-                                history.notes ?: "Round Robin",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Medium,
-                                color = if (history.notes == "Knockout")
-                                    MaterialTheme.colorScheme.onTertiaryContainer
+                            // Tournament Type Label
+                            Surface(
+                                color = if (isKnockout)
+                                    ElectricBlueContainer
                                 else
-                                    MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    CyanContainer,
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text(
+                                    (history.notes ?: "Round Robin").uppercase(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Black,
+                                    color = if (isKnockout)
+                                        ElectricBlue
+                                    else
+                                        Cyan,
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Teams and Matches info
+                        val infoText = try {
+                            val teams = Json.decodeFromString<List<List<String>>>(history.teams)
+                            val results = Json.decodeFromString<List<Int?>>(history.results)
+                            "${teams.size} teams • ${results.size} matches"
+                        } catch (e: Exception) {
+                            "N/A"
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                infoText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = LightTextSecondary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            // Dot separator
+                            Box(
+                                modifier = Modifier
+                                    .size(4.dp)
+                                    .clip(CircleShape)
+                                    .background(LightTextSecondary.copy(alpha = 0.4f))
+                            )
+                            Text(
+                                formatDate(history.createdAt),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = LightTextSecondary
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Tournament Date
-                    Text(
-                        formatDate(history.createdAt),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Number of Teams and Matches
-                    val infoText = try {
-                        val teams = Json.decodeFromString<List<List<String>>>(history.teams)
-                        val results = Json.decodeFromString<List<Int?>>(history.results)
-                        "${teams.size} teams • ${results.size} matches"
-                    } catch (e: Exception) {
-                        "N/A"
+                    // Delete Button
+                    IconButton(onClick = onDelete) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = ErrorRed.copy(alpha = 0.7f)
+                        )
                     }
-
-                    Text(
-                        infoText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                }
-
-                // Delete Button
-                IconButton(onClick = onDelete) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.error
-                    )
                 }
             }
         }

@@ -1,21 +1,33 @@
 package com.example.myapplication.presentation.game
 
 import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.myapplication.presentation.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,18 +45,45 @@ fun GameScreen(
     var showTeamsMenu by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        "Match Management",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Neon badge icon
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(NeonGreen, Cyan)
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.SportsTennis,
+                                contentDescription = null,
+                                tint = DarkOnPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Text(
+                            "MATCH",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
+                            color = LightText,
+                            letterSpacing = 2.sp
+                        )
+                    }
                 },
                 actions = {
                     IconButton(onClick = { showTopMenu = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Main menu")
+                        Icon(Icons.Default.MoreVert, contentDescription = "Main menu", tint = LightTextSecondary)
                     }
                     DropdownMenu(
                         expanded = showTopMenu,
@@ -52,7 +91,7 @@ fun GameScreen(
                     ) {
                         DropdownMenuItem(
                             text = { Text("Score") },
-                            leadingIcon = { Icon(Icons.Default.Star, null) },
+                            leadingIcon = { Icon(Icons.Default.Star, null, tint = SportAmber) },
                             onClick = {
                                 showTopMenu = false
                                 navController.navigate("score")
@@ -60,7 +99,7 @@ fun GameScreen(
                         )
                         DropdownMenuItem(
                             text = { Text("History") },
-                            leadingIcon = { Icon(Icons.Default.History, null) },
+                            leadingIcon = { Icon(Icons.Default.History, null, tint = Cyan) },
                             onClick = {
                                 showTopMenu = false
                                 navController.navigate("history")
@@ -69,8 +108,9 @@ fun GameScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = DarkSurface,
+                    titleContentColor = LightText,
+                    actionIconContentColor = LightText
                 )
             )
         },
@@ -83,44 +123,68 @@ fun GameScreen(
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
 
-            // Card for entering player list
+            // ====== Card nhập danh sách người chơi ======
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(
+                        width = 1.dp,
+                        brush = CardGlowBorderSubtle,
+                        shape = RoundedCornerShape(18.dp)
+                    ),
+                shape = RoundedCornerShape(18.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                colors = CardDefaults.cardColors(containerColor = DarkSurface)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        // Gradient icon badge
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(NeonGreenContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = NeonGreen,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                         Text(
-                            "Player List",
+                            "PLAYER LIST",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Black,
+                            color = LightText,
+                            letterSpacing = 1.sp,
                             modifier = Modifier.weight(1f)
                         )
-                        
-                        // Reset Button
-                        TextButton(
+
+                        // Reset Button với viền đỏ
+                        OutlinedButton(
                             onClick = { gameViewModel.resetAll() },
-                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ErrorRed),
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                                brush = Brush.horizontalGradient(listOf(ErrorRed.copy(alpha = 0.5f), ErrorRed.copy(alpha = 0.3f)))
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                         ) {
-                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Reset")
+                            Text("Reset", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -130,65 +194,145 @@ fun GameScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(140.dp),
-                        placeholder = { Text("Enter player names (Example:\n- Nguyen Van A\n- Tran Thi B)") },
-                        shape = RoundedCornerShape(12.dp)
+                        placeholder = {
+                            Text(
+                                "Enter player names (Example:\n- Nguyen Van A\n- Tran Thi B)",
+                                color = LightTextSecondary.copy(alpha = 0.6f)
+                            )
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = NeonGreen,
+                            unfocusedBorderColor = DarkOutline,
+                            focusedTextColor = LightText,
+                            unfocusedTextColor = LightText,
+                            cursorColor = NeonGreen,
+                            focusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.5f),
+                            unfocusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.3f)
+                        )
                     )
 
-                    // RANDOM TEAM - Full Width
+                    // ===== RANDOM TEAM Button - Gradient Neon =====
                     Button(
-                        onClick = { 
+                        onClick = {
                             gameViewModel.randomTeams()
-                            keyboardController?.hide() // Hide keyboard
+                            keyboardController?.hide()
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
+                            containerColor = Color.Transparent,
+                            contentColor = DarkOnPrimary
                         ),
-                        contentPadding = PaddingValues(vertical = 14.dp)
+                        contentPadding = PaddingValues()
                     ) {
-                        Icon(Icons.Default.Shuffle, null, Modifier.size(20.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Random Team")
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.horizontalGradient(
+                                        colors = listOf(NeonGreen, NeonGreenDark, Cyan)
+                                    ),
+                                    shape = RoundedCornerShape(14.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Default.Shuffle, null, Modifier.size(22.dp), tint = DarkOnPrimary)
+                                Text(
+                                    "RANDOM TEAM",
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.5.sp,
+                                    fontSize = 15.sp,
+                                    color = DarkOnPrimary
+                                )
+                            }
+                        }
                     }
                 }
             }
 
-            // Display team list
+            // ====== Danh sách team ======
             if (teams.isNotEmpty()) {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 1.dp,
+                            brush = CardGlowBorderSubtle,
+                            shape = RoundedCornerShape(18.dp)
+                        ),
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface)
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(Icons.Default.Group, null, tint = MaterialTheme.colorScheme.primary)
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(CyanContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Group, null, tint = Cyan, modifier = Modifier.size(18.dp))
+                            }
                             Text(
-                                "Created Teams (${teams.size})",
+                                "TEAMS (${teams.size})",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Black,
+                                color = LightText,
+                                letterSpacing = 1.sp,
                                 modifier = Modifier.weight(1f)
                             )
-                            
-                            // Menu Button moved here
+
+                            // Share Button
+                            IconButton(onClick = {
+                                val message = gameViewModel.getShareMessage()
+                                val sendIntent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, message)
+                                    type = "text/plain"
+                                }
+                                val shareIntent = Intent.createChooser(sendIntent, "Share with")
+                                context.startActivity(shareIntent)
+                            }) {
+                                Icon(Icons.Default.Share, contentDescription = "Share", tint = NeonGreen)
+                            }
+
+                            // Sort/Menu Button
                             Box {
                                 IconButton(onClick = { showTeamsMenu = true }) {
-                                    Icon(Icons.Default.MoreVert, contentDescription = "Team menu")
+                                    Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort", tint = LightTextSecondary)
                                 }
                                 DropdownMenu(
                                     expanded = showTeamsMenu,
                                     onDismissRequest = { showTeamsMenu = false }
                                 ) {
                                     DropdownMenuItem(
+                                        text = { Text("Sort by size") },
+                                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.Sort, null, tint = NeonGreen) },
+                                        onClick = {
+                                            showTeamsMenu = false
+                                            gameViewModel.sortTeams()
+                                        }
+                                    )
+                                    HorizontalDivider()
+                                    DropdownMenuItem(
                                         text = { Text("Bracket") },
-                                        leadingIcon = { Icon(Icons.Default.AccountTree, null) },
+                                        leadingIcon = { Icon(Icons.Default.AccountTree, null, tint = ElectricBlue) },
                                         onClick = {
                                             showTeamsMenu = false
                                             navController.navigate("bracket")
@@ -196,26 +340,10 @@ fun GameScreen(
                                     )
                                     DropdownMenuItem(
                                         text = { Text("Circle") },
-                                        leadingIcon = { Icon(Icons.Default.Circle, null) },
+                                        leadingIcon = { Icon(Icons.Default.Circle, null, tint = Cyan) },
                                         onClick = {
                                             showTeamsMenu = false
                                             navController.navigate("circle")
-                                        }
-                                    )
-                                    HorizontalDivider()
-                                    DropdownMenuItem(
-                                        text = { Text("Share") },
-                                        leadingIcon = { Icon(Icons.Default.Share, null) },
-                                        onClick = {
-                                            showTeamsMenu = false
-                                            val message = gameViewModel.getShareMessage()
-                                            val sendIntent = Intent().apply {
-                                                action = Intent.ACTION_SEND
-                                                putExtra(Intent.EXTRA_TEXT, message)
-                                                type = "text/plain"
-                                            }
-                                            val shareIntent = Intent.createChooser(sendIntent, "Share with")
-                                            context.startActivity(shareIntent)
                                         }
                                     )
                                 }
@@ -231,77 +359,101 @@ fun GameScreen(
         }
     }
 }
+
 @Composable
 fun TeamCard(
     teamNumber: Int,
     players: List<String>
 ) {
+    val teamColors = listOf(
+        listOf(NeonGreen, Cyan),
+        listOf(Cyan, ElectricBlue),
+        listOf(ElectricBlue, NeonGreen),
+        listOf(SportAmber, NeonGreen)
+    )
+    val colorPair = teamColors[(teamNumber - 1) % teamColors.size]
+
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            containerColor = DarkSurfaceVariant
         ),
-        border = CardDefaults.outlinedCardBorder()
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp)
+        Row(modifier = Modifier.fillMaxWidth()) {
+            // Gradient left accent bar
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.verticalGradient(colors = colorPair),
+                        shape = RoundedCornerShape(topStart = 14.dp, bottomStart = 14.dp)
+                    )
+            )
+
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    // Team number badge - gradient
                     Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                Brush.linearGradient(colors = colorPair)
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "$teamNumber",
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
+                            fontWeight = FontWeight.Black,
+                            color = DarkOnPrimary
+                        )
+                    }
+                    Column {
+                        Text(
+                            "TEAM $teamNumber",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Black,
+                            color = colorPair[0],
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            "${players.size} players",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LightTextSecondary
                         )
                     }
                 }
-                Text(
-                    "Team $teamNumber",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    "(${players.size} players)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                players.forEach { player ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            player,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    players.forEach { player ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(colorPair[1].copy(alpha = 0.7f))
+                            )
+                            Text(
+                                player,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = LightText
+                            )
+                        }
                     }
                 }
             }
