@@ -44,9 +44,9 @@ class ScoreViewModel : ViewModel() {
 
     private fun checkWinner() {
         if (_scoreA.value >= 21 && _scoreA.value - _scoreB.value >= 2) {
-            _winner.value = "Player 1"
+            _winner.value = "TEAM A"
         } else if (_scoreB.value >= 21 && _scoreB.value - _scoreA.value >= 2) {
-            _winner.value = "Player 2"
+            _winner.value = "TEAM B"
         }
     }
 }
