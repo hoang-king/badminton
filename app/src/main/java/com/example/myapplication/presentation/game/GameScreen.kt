@@ -3,6 +3,7 @@ package com.example.myapplication.presentation.game
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,12 +22,15 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.myapplication.domain.usecase.RandomTeamsUseCase
 import com.example.myapplication.presentation.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,8 +40,11 @@ fun GameScreen(
     navController: NavController
 ) {
     val playerInput by gameViewModel.playerInput.collectAsState()
+    val femaleInput by gameViewModel.femaleInput.collectAsState()
+    val gameMode by gameViewModel.gameMode.collectAsState()
     val teams by gameViewModel.teams.collectAsState()
 
+    val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
@@ -121,6 +128,11 @@ fun GameScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                    })
+                }
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -188,29 +200,105 @@ fun GameScreen(
                         }
                     }
 
-                    OutlinedTextField(
-                        value = playerInput,
-                        onValueChange = { gameViewModel.setPlayerInput(it) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(140.dp),
-                        placeholder = {
-                            Text(
-                                "Enter player names (Example:\n- Nguyen Van A\n- Tran Thi B)",
-                                color = LightTextSecondary.copy(alpha = 0.6f)
-                            )
-                        },
-                        shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = NeonGreen,
-                            unfocusedBorderColor = DarkOutline,
-                            focusedTextColor = LightText,
-                            unfocusedTextColor = LightText,
-                            cursorColor = NeonGreen,
-                            focusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.5f),
-                            unfocusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.3f)
+                        Text(
+                            "GAME MODE",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Black,
+                            color = LightText,
+                            letterSpacing = 1.sp,
+                            modifier = Modifier.fillMaxWidth()
                         )
-                    )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            RandomTeamsUseCase.GameMode.entries.forEach { mode ->
+                                val isSelected = gameMode == mode
+                                val label = when (mode) {
+                                    RandomTeamsUseCase.GameMode.SINGLES -> "Đơn"
+                                    RandomTeamsUseCase.GameMode.DOUBLES -> "Đôi"
+                                    RandomTeamsUseCase.GameMode.MIXED_DOUBLES -> "Nam/Nữ"
+                                }
+                                
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { gameViewModel.setGameMode(mode) },
+                                    label = { Text(label) },
+                                    modifier = Modifier.weight(1f),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = NeonGreenContainer,
+                                        selectedLabelColor = NeonGreen,
+                                        containerColor = DarkSurfaceVariant.copy(alpha = 0.3f),
+                                        labelColor = LightTextSecondary
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = isSelected,
+                                        borderColor = DarkOutline,
+                                        selectedBorderColor = NeonGreen
+                                    )
+                                )
+                            }
+                        }
+
+                        val primaryPlaceholder = when (gameMode) {
+                            RandomTeamsUseCase.GameMode.SINGLES -> "Danh sách người chơi"
+                            RandomTeamsUseCase.GameMode.DOUBLES -> "Danh sách người chơi"
+                            RandomTeamsUseCase.GameMode.MIXED_DOUBLES -> "Danh sách Nam"
+                        }
+
+                        OutlinedTextField(
+                            value = playerInput,
+                            onValueChange = { gameViewModel.setPlayerInput(it) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            label = { Text(primaryPlaceholder, color = LightTextSecondary) },
+                            placeholder = {
+                                Text(
+                                    "Ví dụ:\n- Nguyễn Văn A\n- Trần Văn B",
+                                    color = LightTextSecondary.copy(alpha = 0.6f)
+                                )
+                            },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = NeonGreen,
+                                unfocusedBorderColor = DarkOutline,
+                                focusedTextColor = LightText,
+                                unfocusedTextColor = LightText,
+                                cursorColor = NeonGreen,
+                                focusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.5f),
+                                unfocusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.3f)
+                            )
+                        )
+
+                        if (gameMode == RandomTeamsUseCase.GameMode.MIXED_DOUBLES) {
+                            OutlinedTextField(
+                                value = femaleInput,
+                                onValueChange = { gameViewModel.setFemaleInput(it) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(120.dp),
+                                label = { Text("Danh sách Nữ", color = LightTextSecondary) },
+                                placeholder = {
+                                    Text(
+                                        "Ví dụ:\n- Trần Thị B\n- Lê Thị C",
+                                        color = LightTextSecondary.copy(alpha = 0.6f)
+                                    )
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Cyan,
+                                    unfocusedBorderColor = DarkOutline,
+                                    focusedTextColor = LightText,
+                                    unfocusedTextColor = LightText,
+                                    cursorColor = Cyan,
+                                    focusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.5f),
+                                    unfocusedContainerColor = DarkSurfaceVariant.copy(alpha = 0.3f)
+                                )
+                            )
+                        }
 
                     // ===== RANDOM TEAM Button - Gradient Neon =====
                     Button(

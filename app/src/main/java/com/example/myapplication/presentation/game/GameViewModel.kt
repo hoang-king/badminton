@@ -15,38 +15,57 @@ class GameViewModel : ViewModel() {
     private val _playerInput = MutableStateFlow(TextFieldValue(""))
     val playerInput = _playerInput.asStateFlow()
 
+    private val _femaleInput = MutableStateFlow(TextFieldValue(""))
+    val femaleInput = _femaleInput.asStateFlow()
+
+    private val _gameMode = MutableStateFlow(RandomTeamsUseCase.GameMode.DOUBLES)
+    val gameMode = _gameMode.asStateFlow()
+
     private val _teams = MutableStateFlow<List<List<String>>>(emptyList())
     val teams = _teams.asStateFlow()
 
-    fun setPlayerInput(newValue: TextFieldValue) {
-        val oldText = _playerInput.value.text
+    fun setGameMode(mode: RandomTeamsUseCase.GameMode) {
+        _gameMode.value = mode
+    }
+
+    private fun formatInput(oldText: String, newValue: TextFieldValue): TextFieldValue {
         val newText = newValue.text
 
         // 1. Nếu bắt đầu nhập ký tự đầu tiên
         if (oldText.isEmpty() && newText.isNotEmpty() && !newText.startsWith("-")) {
             val formatted = "- $newText"
-            _playerInput.value = TextFieldValue(
+            return TextFieldValue(
                 text = formatted,
                 selection = TextRange(formatted.length)
             )
-            return
         }
 
         // 2. Nếu nhấn Enter xuống dòng
         if (newText.length > oldText.length && newText.endsWith("\n")) {
             val formatted = "$newText- "
-            _playerInput.value = TextFieldValue(
+            return TextFieldValue(
                 text = formatted,
                 selection = TextRange(formatted.length)
             )
-            return
         }
 
-        _playerInput.value = newValue
+        return newValue
+    }
+
+    fun setPlayerInput(newValue: TextFieldValue) {
+        _playerInput.value = formatInput(_playerInput.value.text, newValue)
+    }
+
+    fun setFemaleInput(newValue: TextFieldValue) {
+        _femaleInput.value = formatInput(_femaleInput.value.text, newValue)
     }
 
     fun randomTeams() {
-        _teams.value = randomTeamsUseCase(playerInput.value.text)
+        _teams.value = randomTeamsUseCase(
+            playerInput = playerInput.value.text,
+            mode = gameMode.value,
+            femaleInput = femaleInput.value.text
+        )
     }
 
     fun sortTeams() {
@@ -58,11 +77,18 @@ class GameViewModel : ViewModel() {
 
     fun resetAll() {
         _playerInput.value = TextFieldValue("")
+        _femaleInput.value = TextFieldValue("")
         _teams.value = emptyList()
     }
 
     // Hàm này dùng để lấy nội dung Share Sheet
     fun getShareMessage(): String {
+        val modeText = when (gameMode.value) {
+            RandomTeamsUseCase.GameMode.SINGLES -> "Đánh Đơn"
+            RandomTeamsUseCase.GameMode.DOUBLES -> "Đánh Đôi"
+            RandomTeamsUseCase.GameMode.MIXED_DOUBLES -> "Đôi Nam Nữ"
+        }
+
         val teamsText = _teams.value.mapIndexed { index, team ->
             val playersList = team.joinToString("\n") { "  - $it" }
             "✨ **Đội ${index + 1}**" + " (${team.size} người):\n$playersList"
@@ -72,8 +98,8 @@ class GameViewModel : ViewModel() {
         return """
         🎮 **KẾT QUẢ RANDOM ĐỘI** 🎮
 
+        👉 Chế độ: **$modeText**
         👉 Tổng số người chơi: **${_teams.value.sumOf { it.size }}**
-
         👉 Số đội: **${_teams.value.size}**
 
         $teamsText
