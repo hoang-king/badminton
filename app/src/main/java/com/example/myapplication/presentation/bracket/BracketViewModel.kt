@@ -64,6 +64,105 @@ class BracketViewModel : ViewModel() {
         }
     }
 
+    private val _selectedMatchForScore = MutableStateFlow<BracketMatch?>(null)
+    val selectedMatchForScore = _selectedMatchForScore.asStateFlow()
+
+    fun openScoreDialog(match: BracketMatch) {
+        _selectedMatchForScore.value = match
+    }
+
+    fun closeScoreDialog() {
+        _selectedMatchForScore.value = null
+    }
+
+    fun updateBracketResult(
+        roundIndex: Int, 
+        matchIndex: Int, 
+        score1: Int?, 
+        score2: Int?,
+        isBo3: Boolean,
+        setScores1: List<Int?>,
+        setScores2: List<Int?>
+    ) {
+        val matches = _matches.value.toMutableList()
+        val idx = matches.indexOfFirst {
+            it.roundIndex == roundIndex && it.matchIndex == matchIndex
+        }
+
+        if (idx == -1) return
+
+        val winner = when {
+            score1 == null || score2 == null -> null
+            score1 > score2 -> 1
+            score2 > score1 -> 2
+            else -> null
+        }
+
+        matches[idx] = matches[idx].copy(
+            score1 = score1, 
+            score2 = score2, 
+            winner = winner,
+            isBo3 = isBo3,
+            setScores1 = setScores1,
+            setScores2 = setScores2
+        )
+        
+        if (winner != null) {
+            clearDownstream(matches, roundIndex, matchIndex)
+            propagateWinners(matches)
+        } else {
+            clearDownstream(matches, roundIndex, matchIndex)
+        }
+
+        _matches.value = matches
+        checkFinalWinner(matches)
+    }
+
+    /**
+     * Cập nhật tỉ số cho một trận đấu và tự động chọn winner
+     */
+    fun updateBracketScore(roundIndex: Int, matchIndex: Int, score1: Int?, score2: Int?) {
+        val matches = _matches.value.toMutableList()
+        val idx = matches.indexOfFirst {
+            it.roundIndex == roundIndex && it.matchIndex == matchIndex
+        }
+
+        if (idx == -1) return
+
+        val match = matches[idx]
+        val winner = when {
+            score1 == null || score2 == null -> null
+            score1 > score2 -> 1
+            score2 > score1 -> 2
+            else -> null
+        }
+
+        matches[idx] = match.copy(score1 = score1, score2 = score2, winner = winner)
+        
+        // Cập nhật tree
+        if (winner != null) {
+            clearDownstream(matches, roundIndex, matchIndex)
+            propagateWinners(matches)
+        } else {
+            // Nếu winner trở thành null, cũng cần clear downstream
+            clearDownstream(matches, roundIndex, matchIndex)
+        }
+
+        _matches.value = matches
+        checkFinalWinner(matches)
+    }
+
+    private fun checkFinalWinner(matches: List<BracketMatch>) {
+        val finalMatch = matches.find {
+            it.roundIndex == _totalRounds.value - 1 && it.matchIndex == 0
+        }
+        val isWon = finalMatch?.winner != null
+        _isFinalWon.value = isWon
+        if (isWon) {
+            _showSaveDialog.value = true
+        }
+    }
+
     /**
      * Chọn đội thắng cho một trận đấu
      * Logic: Cập nhật winner → Clear downstream → Propagate
@@ -77,12 +176,8 @@ class BracketViewModel : ViewModel() {
         if (idx == -1) return
 
         val match = matches[idx]
-        val winningTeam = if (winner == 1) match.team1 else match.team2
-        val winningIndex = if (winner == 1) match.team1Index else match.team2Index
-
-        if (winningTeam == null) return
-
-        // 1. Cập nhật winner
+        
+        // Cập nhật winner thủ công (không qua tỉ số)
         matches[idx] = match.copy(winner = winner)
 
         // 2. Clear tất cả matches downstream
@@ -92,16 +187,7 @@ class BracketViewModel : ViewModel() {
         propagateWinners(matches)
 
         _matches.value = matches
-
-        // 4. Check if final match has a winner
-        val finalMatch = matches.find {
-            it.roundIndex == _totalRounds.value - 1 && it.matchIndex == 0
-        }
-        val isWon = finalMatch?.winner != null
-        _isFinalWon.value = isWon
-        if (isWon) {
-            _showSaveDialog.value = true
-        }
+        checkFinalWinner(matches)
     }
 
     fun closeSaveDialog() {

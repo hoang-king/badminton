@@ -39,6 +39,65 @@ class CircleViewModel : ViewModel() {
         _matches.value = generateRoundRobinMatchesUseCase(_teams.value)
     }
 
+    private val _selectedMatchForScore = MutableStateFlow<Match?>(null)
+    val selectedMatchForScore = _selectedMatchForScore.asStateFlow()
+
+    fun openScoreDialog(match: Match) {
+        _selectedMatchForScore.value = match
+    }
+
+    fun closeScoreDialog() {
+        _selectedMatchForScore.value = null
+    }
+
+    fun updateMatchResult(
+        matchNumber: Int, 
+        score1: Int?, 
+        score2: Int?, 
+        isBo3: Boolean,
+        setScores1: List<Int?>,
+        setScores2: List<Int?>
+    ) {
+        _matches.value = _matches.value.map { match ->
+            if (match.matchNumber == matchNumber) {
+                val winnerIndex = when {
+                    score1 == null || score2 == null -> null
+                    score1 > score2 -> 0
+                    score2 > score1 -> 1
+                    else -> null
+                }
+                match.copy(
+                    score1 = score1, 
+                    score2 = score2, 
+                    winnerIndex = winnerIndex,
+                    isBo3 = isBo3,
+                    setScores1 = setScores1,
+                    setScores2 = setScores2
+                )
+            } else {
+                match
+            }
+        }
+        checkAllMatchesCompleted()
+    }
+
+    fun updateMatchScore(matchNumber: Int, score1: Int?, score2: Int?) {
+        _matches.value = _matches.value.map { match ->
+            if (match.matchNumber == matchNumber) {
+                val winnerIndex = when {
+                    score1 == null || score2 == null -> null
+                    score1 > score2 -> 0
+                    score2 > score1 -> 1
+                    else -> null // Hoà (trong cầu lông thường không hoà, nhưng để null nếu bằng nhau)
+                }
+                match.copy(score1 = score1, score2 = score2, winnerIndex = winnerIndex)
+            } else {
+                match
+            }
+        }
+        checkAllMatchesCompleted()
+    }
+
     fun setMatchWinner(matchNumber: Int, winnerIndex: Int?) {
         _matches.value = _matches.value.map { match ->
             if (match.matchNumber == matchNumber) {

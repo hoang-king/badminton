@@ -45,6 +45,7 @@ fun CircleScreen(
     val teams by gameViewModel.teams.collectAsState()
     val matches by circleViewModel.matches.collectAsState()
     val showSaveDialog by circleViewModel.showSaveDialog.collectAsState()
+    val selectedMatchForScore by circleViewModel.selectedMatchForScore.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -52,6 +53,22 @@ fun CircleScreen(
         if (teams.isNotEmpty()) {
             circleViewModel.setTeams(teams)
         }
+    }
+
+    // Score Input Dialog
+    selectedMatchForScore?.let { match ->
+        ScoreInputDialog(
+            team1Name = "Team ${match.team1Index + 1}",
+            team2Name = "Team ${match.team2Index + 1}",
+            initialIsBo3 = match.isBo3,
+            initialSetScores1 = match.setScores1,
+            initialSetScores2 = match.setScores2,
+            onDismiss = { circleViewModel.closeScoreDialog() },
+            onConfirm = { s1, s2, isBo3, sets1, sets2 ->
+                circleViewModel.updateMatchResult(match.matchNumber, s1, s2, isBo3, sets1, sets2)
+                circleViewModel.closeScoreDialog()
+            }
+        )
     }
 
     // Dialog save history
@@ -323,15 +340,149 @@ fun CircleScreen(
                     MatchCard(
                         match = match,
                         matchIndex = index,
-                        onWinnerSelected = { winnerIndex ->
-                            circleViewModel.setMatchWinner(match.matchNumber, winnerIndex)
-                        }
+                        onClick = { circleViewModel.openScoreDialog(match) }
                     )
                     Spacer(modifier = Modifier.height(14.dp))
                 }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScoreInputDialog(
+    team1Name: String,
+    team2Name: String,
+    initialIsBo3: Boolean,
+    initialSetScores1: List<Int?>,
+    initialSetScores2: List<Int?>,
+    onDismiss: () -> Unit,
+    onConfirm: (Int, Int, Boolean, List<Int?>, List<Int?>) -> Unit
+) {
+    var isBo3 by remember { mutableStateOf(initialIsBo3) }
+    var setScores1 by remember { mutableStateOf(initialSetScores1) }
+    var setScores2 by remember { mutableStateOf(initialSetScores2) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DarkSurfaceVariant,
+        title = {
+            Text("ENTER SCORE", fontWeight = FontWeight.Black, color = NeonGreen)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                // Toggle Bo3
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Match Format", color = LightText, fontWeight = FontWeight.Bold)
+                    Row {
+                        FilterChip(
+                            selected = !isBo3,
+                            onClick = { isBo3 = false },
+                            label = { Text("1 Round") },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Cyan,
+                                selectedLabelColor = DarkOnPrimary
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        FilterChip(
+                            selected = isBo3,
+                            onClick = { isBo3 = true },
+                            label = { Text("Bo3") },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = NeonGreen,
+                                selectedLabelColor = DarkOnPrimary
+                            )
+                        )
+                    }
+                }
+
+                // Set Inputs
+                val setLimit = if (isBo3) 3 else 1
+                for (i in 0 until setLimit) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("SET ${i + 1}", style = MaterialTheme.typography.labelMedium, color = LightTextSecondary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ScoreField(
+                                value = setScores1.getOrNull(i)?.toString() ?: "",
+                                label = team1Name,
+                                onValueChange = { val newList = setScores1.toMutableList(); newList[i] = it.toIntOrNull(); setScores1 = newList },
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text("VS", fontWeight = FontWeight.Black, color = ElectricBlue)
+                            ScoreField(
+                                value = setScores2.getOrNull(i)?.toString() ?: "",
+                                label = team2Name,
+                                onValueChange = { val newList = setScores2.toMutableList(); newList[i] = it.toIntOrNull(); setScores2 = newList },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val s1 = if (isBo3) {
+                        var wins = 0
+                        for (i in 0 until 3) {
+                            val sc1 = setScores1.getOrNull(i) ?: 0
+                            val sc2 = setScores2.getOrNull(i) ?: 0
+                            if (sc1 > sc2) wins++
+                        }
+                        wins
+                    } else (setScores1.firstOrNull() ?: 0)
+                    
+                    val s2 = if (isBo3) {
+                        var wins = 0
+                        for (i in 0 until 3) {
+                            val sc1 = setScores1.getOrNull(i) ?: 0
+                            val sc2 = setScores2.getOrNull(i) ?: 0
+                            if (sc2 > sc1) wins++
+                        }
+                        wins
+                    } else (setScores2.firstOrNull() ?: 0)
+
+                    onConfirm(s1, s2, isBo3, setScores1, setScores2)
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = NeonGreen, contentColor = DarkOnPrimary)
+            ) {
+                Text("CONFIRM", fontWeight = FontWeight.Black)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = LightTextSecondary) }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ScoreField(value: String, label: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label, fontSize = 10.sp) },
+        modifier = modifier,
+        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Cyan,
+            unfocusedBorderColor = DarkOutline,
+            focusedContainerColor = DarkSurfaceHigh,
+            unfocusedContainerColor = DarkSurfaceHigh
+        ),
+        singleLine = true
+    )
 }
 
 @Composable
@@ -362,7 +513,11 @@ private fun StatCard(
 }
 
 @Composable
-private fun MatchCard(match: Match, matchIndex: Int, onWinnerSelected: (Int?) -> Unit) {
+private fun MatchCard(
+    match: Match, 
+    matchIndex: Int, 
+    onClick: () -> Unit
+) {
     val matchColors = listOf(
         listOf(NeonGreen, Cyan),
         listOf(Cyan, ElectricBlue),
@@ -374,6 +529,7 @@ private fun MatchCard(match: Match, matchIndex: Int, onWinnerSelected: (Int?) ->
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .border(
                 width = 1.dp,
                 brush = Brush.horizontalGradient(
@@ -390,19 +546,34 @@ private fun MatchCard(match: Match, matchIndex: Int, onWinnerSelected: (Int?) ->
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Match number badge - gradient
-            Surface(
-                color = colorPair[0].copy(alpha = 0.15f),
-                shape = RoundedCornerShape(10.dp)
+            // Match number badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "MATCH ${match.matchNumber}",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Black,
-                    color = colorPair[0],
-                    letterSpacing = 1.sp,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
-                )
+                Surface(
+                    color = colorPair[0].copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(
+                        "MATCH ${match.matchNumber}${if (match.isBo3) " (Bo3)" else ""}",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Black,
+                        color = colorPair[0],
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
+                    )
+                }
+                
+                if (match.winnerIndex != null) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = "Completed",
+                        tint = NeonGreen,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -419,34 +590,18 @@ private fun MatchCard(match: Match, matchIndex: Int, onWinnerSelected: (Int?) ->
                     isWinner = match.winnerIndex == 0,
                     isLoser = match.winnerIndex == 1,
                     accentColor = colorPair[0],
-                    onClick = {
-                        if (match.winnerIndex == 0) onWinnerSelected(null) else onWinnerSelected(0)
-                    },
                     modifier = Modifier.weight(1f)
                 )
 
-                // VS badge
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    ElectricBlueContainer,
-                                    DarkSurfaceHigh
-                                )
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
+                // Score Display
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        "VS",
-                        style = MaterialTheme.typography.labelLarge,
+                        "${match.score1 ?: 0} - ${match.score2 ?: 0}",
+                        style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Black,
-                        color = ElectricBlue,
-                        letterSpacing = 1.sp
+                        color = if (match.winnerIndex != null) NeonGreen else LightText
                     )
+                    Text("VS", style = MaterialTheme.typography.labelSmall, color = ElectricBlue)
                 }
 
                 // Team 2
@@ -456,46 +611,14 @@ private fun MatchCard(match: Match, matchIndex: Int, onWinnerSelected: (Int?) ->
                     isWinner = match.winnerIndex == 1,
                     isLoser = match.winnerIndex == 0,
                     accentColor = colorPair[1],
-                    onClick = {
-                        if (match.winnerIndex == 1) onWinnerSelected(null) else onWinnerSelected(1)
-                    },
                     modifier = Modifier.weight(1f)
                 )
-            }
-
-            // Winner result
-            if (match.winnerIndex != null) {
-                Spacer(modifier = Modifier.height(14.dp))
-                Surface(
-                    color = NeonGreenContainer,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = NeonGreen,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            "TEAM ${if (match.winnerIndex == 0) match.team1Index + 1 else match.team2Index + 1} WINS",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Black,
-                            color = NeonGreen,
-                            letterSpacing = 1.sp
-                        )
-                    }
-                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TeamColumn(
     teamNumber: Int,
@@ -503,51 +626,40 @@ private fun TeamColumn(
     isWinner: Boolean = false,
     isLoser: Boolean = false,
     accentColor: androidx.compose.ui.graphics.Color = Cyan,
-    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
-            .clickable(onClick = onClick)
-            .alpha(if (isLoser) 0.35f else 1f)
-            .padding(8.dp),
+            .alpha(if (isLoser) 0.5f else 1f)
+            .padding(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Team badge
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(
-                    if (isWinner)
-                        Brush.linearGradient(colors = listOf(NeonGreen, Cyan))
-                    else
-                        Brush.linearGradient(colors = listOf(DarkSurfaceHigh, DarkSurfaceBright))
-                ),
+                .size(32.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(if (isWinner) NeonGreen else DarkSurfaceHigh),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 "$teamNumber",
-                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Black,
                 color = if (isWinner) DarkOnPrimary else accentColor
             )
         }
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             "TEAM $teamNumber",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Black,
-            color = if (isWinner) NeonGreen else accentColor,
-            letterSpacing = 0.5.sp
+            color = if (isWinner) NeonGreen else LightText,
         )
-        Spacer(modifier = Modifier.height(6.dp))
         players.forEach { player ->
             Text(
                 player,
                 style = MaterialTheme.typography.bodySmall,
-                color = LightText,
-                textAlign = TextAlign.Center
+                color = LightTextSecondary,
+                maxLines = 1
             )
         }
     }

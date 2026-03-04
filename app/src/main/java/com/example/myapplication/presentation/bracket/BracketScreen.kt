@@ -49,12 +49,33 @@ fun BracketScreen(
     val teams by gameViewModel.teams.collectAsState()
     val totalRounds by bracketViewModel.totalRounds.collectAsState()
     val showSaveDialog by bracketViewModel.showSaveDialog.collectAsState()
+    val selectedMatchForScore by bracketViewModel.selectedMatchForScore.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(teams) {
         if (teams.isNotEmpty()) {
             bracketViewModel.setTeams(teams)
         }
+    }
+
+    // Score Input Dialog
+    selectedMatchForScore?.let { match ->
+        com.example.myapplication.presentation.circle.ScoreInputDialog(
+            team1Name = "T${(match.team1Index ?: 0) + 1}",
+            team2Name = "T${(match.team2Index ?: 0) + 1}",
+            initialIsBo3 = match.isBo3,
+            initialSetScores1 = match.setScores1,
+            initialSetScores2 = match.setScores2,
+            onDismiss = { bracketViewModel.closeScoreDialog() },
+            onConfirm = { s1, s2, isBo3, sets1, sets2 ->
+                bracketViewModel.updateBracketResult(
+                    match.roundIndex, 
+                    match.matchIndex, 
+                    s1, s2, isBo3, sets1, sets2
+                )
+                bracketViewModel.closeScoreDialog()
+            }
+        )
     }
 
     // Dialog save history
@@ -308,9 +329,7 @@ private fun BracketContent(
                     matches = matches.filter { it.roundIndex == round }
                         .sortedBy { it.matchIndex },
                     isFinalWon = isFinalWon,
-                    onTeamClick = { matchIndex, winner ->
-                        bracketViewModel.selectWinner(round, matchIndex, winner)
-                    }
+                    bracketViewModel = bracketViewModel
                 )
             }
         }
@@ -326,14 +345,14 @@ private fun BracketRoundColumn(
     totalRounds: Int,
     matches: List<BracketMatch>,
     isFinalWon: Boolean,
-    onTeamClick: (Int, Int) -> Unit
+    bracketViewModel: BracketViewModel
 ) {
     val baseSpacing = 16
     val multiplier = 1 shl round
     val spacing = (baseSpacing * multiplier).dp
 
     Column(
-        modifier = Modifier.width(200.dp),
+        modifier = Modifier.width(220.dp), // Increased width for score input
         verticalArrangement = Arrangement.spacedBy(spacing)
     ) {
         RoundHeader(round = round, totalRounds = totalRounds)
@@ -348,9 +367,7 @@ private fun BracketRoundColumn(
                 match = match,
                 isFinal = round == totalRounds - 1,
                 isFinalWon = isFinalWon,
-                onTeamClick = { winner ->
-                    onTeamClick(match.matchIndex, winner)
-                }
+                onClick = { bracketViewModel.openScoreDialog(match) }
             )
 
             if (round > 0) {
@@ -411,7 +428,7 @@ private fun MatchCard(
     match: BracketMatch,
     isFinal: Boolean = false,
     isFinalWon: Boolean = false,
-    onTeamClick: (Int) -> Unit
+    onClick: () -> Unit
 ) {
     if (match.team1 == null && match.team2 == null) {
         Spacer(modifier = Modifier.height(100.dp))
@@ -422,6 +439,7 @@ private fun MatchCard(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable(onClick = onClick)
                 .border(
                     width = 1.dp,
                     color = if (isFinal && isFinalWon) NeonGreen.copy(alpha = 0.3f) else DarkOutline,
@@ -434,7 +452,7 @@ private fun MatchCard(
             shape = RoundedCornerShape(12.dp)
         ) {
             Column(
-                modifier = Modifier.padding(10.dp),
+                modifier = Modifier.padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 // Team 1
@@ -443,8 +461,7 @@ private fun MatchCard(
                         team = match.team1,
                         teamIndex = match.team1Index,
                         isWinner = match.winner == 1,
-                        isClickable = match.winner == null,
-                        onClick = { onTeamClick(1) }
+                        score = match.score1
                     )
                 }
 
@@ -455,15 +472,7 @@ private fun MatchCard(
                             .fillMaxWidth()
                             .padding(horizontal = 4.dp)
                             .height(1.dp)
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = listOf(
-                                        DarkOutline.copy(alpha = 0f),
-                                        NeonGreen.copy(alpha = 0.3f),
-                                        DarkOutline.copy(alpha = 0f)
-                                    )
-                                )
-                            )
+                            .background(DarkOutline.copy(alpha = 0.2f))
                     )
                 }
 
@@ -473,8 +482,7 @@ private fun MatchCard(
                         team = match.team2,
                         teamIndex = match.team2Index,
                         isWinner = match.winner == 2,
-                        isClickable = match.winner == null,
-                        onClick = { onTeamClick(2) }
+                        score = match.score2
                     )
                 }
             }
@@ -495,87 +503,53 @@ private fun TeamBox(
     team: List<String>,
     teamIndex: Int?,
     isWinner: Boolean,
-    isClickable: Boolean,
-    onClick: () -> Unit
+    score: Int? = null
 ) {
-    val backgroundColor = when {
-        isWinner -> NeonGreenContainer
-        isClickable -> DarkSurfaceVariant
-        else -> DarkSurface
-    }
-
-    Box(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(backgroundColor)
-            .then(
-                if (isWinner) Modifier.border(
-                    width = 1.dp,
-                    brush = Brush.horizontalGradient(listOf(NeonGreen, Cyan)),
-                    shape = RoundedCornerShape(8.dp)
-                ) else Modifier
-            )
-            .clickable(enabled = isClickable) { onClick() }
-            .padding(12.dp)
+            .background(if (isWinner) NeonGreen.copy(alpha = 0.1f) else Color.Transparent)
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(if (isWinner) NeonGreen else DarkSurfaceHigh),
+                contentAlignment = Alignment.Center
             ) {
-                // Team number badge
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(RoundedCornerShape(7.dp))
-                        .background(
-                            if (isWinner)
-                                Brush.linearGradient(listOf(NeonGreen, Cyan))
-                            else
-                                Brush.linearGradient(listOf(DarkSurfaceHigh, DarkSurfaceBright))
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "${(teamIndex ?: 0) + 1}",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Black,
-                        color = if (isWinner) DarkOnPrimary else LightTextSecondary
-                    )
-                }
-                Column {
-                    Text(
-                        text = "TEAM ${(teamIndex ?: 0) + 1}",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Black,
-                        color = if (isWinner) NeonGreen else LightText,
-                        letterSpacing = 0.5.sp
-                    )
-                    team.forEach { player ->
-                        Text(
-                            text = player,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (isWinner) LightText else LightTextSecondary
-                        )
-                    }
-                }
-            }
-
-            if (isWinner) {
-                Icon(
-                    Icons.Default.EmojiEvents,
-                    contentDescription = null,
-                    tint = NeonGreen,
-                    modifier = Modifier.size(22.dp)
+                Text(
+                    text = "${(teamIndex ?: 0) + 1}",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Black,
+                    color = if (isWinner) DarkOnPrimary else LightTextSecondary,
+                    fontSize = 9.sp
                 )
             }
+            Text(
+                text = team.firstOrNull() ?: "",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (isWinner) NeonGreen else LightText,
+                maxLines = 1,
+                fontSize = 10.sp
+            )
         }
+
+        Text(
+            text = "${score ?: 0}",
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Black,
+            color = if (isWinner) NeonGreen else Cyan,
+            fontSize = 11.sp
+        )
     }
 }
 
