@@ -3,7 +3,9 @@ package com.example.myapplication.domain.usecase
 import com.example.myapplication.domain.model.BracketMatch
 import kotlin.math.log2
 
-class GenerateBracketUseCase {
+import javax.inject.Inject
+
+class GenerateBracketUseCase @Inject constructor() {
     operator fun invoke(teams: List<List<String>>): Pair<List<BracketMatch>, Int> {
         if (teams.isEmpty()) {
             return Pair(emptyList(), 0)

@@ -22,7 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.myapplication.presentation.history.HistoryViewModel
 import com.example.myapplication.data.RoundRobinHistoryEntity
@@ -36,12 +36,7 @@ import java.util.*
 fun HistoryScreen(
     navController: NavController
 ) {
-    val context = LocalContext.current
-    val historyViewModel: HistoryViewModel = viewModel(
-        factory = HistoryViewModel.Factory(
-            context = context
-        )
-    )
+    val historyViewModel: HistoryViewModel = hiltViewModel()
     val histories by historyViewModel.histories.collectAsState()
 
     Scaffold(

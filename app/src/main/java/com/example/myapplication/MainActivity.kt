@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -18,6 +17,11 @@ import com.example.myapplication.presentation.game.GameViewModel
 import com.example.myapplication.presentation.score.BadmintonScoreScreen
 import com.example.myapplication.presentation.theme.MyApplicationTheme
 
+import dagger.hilt.android.AndroidEntryPoint
+
+import androidx.hilt.navigation.compose.hiltViewModel
+
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,9 +30,9 @@ class MainActivity : ComponentActivity() {
             MyApplicationTheme {
                 val navController = rememberNavController()
                 // Tạo shared ViewModels ở đây
-                val gameViewModel: GameViewModel = viewModel()
-                val circleViewModel: CircleViewModel = viewModel()
-                val bracketViewModel: BracketViewModel = viewModel()
+                val gameViewModel: GameViewModel = hiltViewModel()
+                val circleViewModel: CircleViewModel = hiltViewModel()
+                val bracketViewModel: BracketViewModel = hiltViewModel()
 
                 NavHost(navController = navController, startDestination = "game") {
                     composable("game") {

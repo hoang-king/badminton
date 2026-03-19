@@ -1,9 +1,11 @@
 package com.example.myapplication.domain.usecase
 
+import javax.inject.Inject
+
 /**
  * UseCase để chia đội ngẫu nhiên từ danh sách tên người chơi.
  */
-class RandomTeamsUseCase {
+class RandomTeamsUseCase @Inject constructor() {
     enum class GameMode {
         SINGLES,
         DOUBLES,

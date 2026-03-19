@@ -4,7 +4,9 @@ import com.example.myapplication.data.RoundRobinHistoryDao
 import com.example.myapplication.data.RoundRobinHistoryEntity
 import kotlinx.coroutines.flow.Flow
 
-class RoundRobinHistoryRepository(private val dao: RoundRobinHistoryDao) {
+import javax.inject.Inject
+
+class RoundRobinHistoryRepository @Inject constructor(private val dao: RoundRobinHistoryDao) {
     
     fun getAllHistory(): Flow<List<RoundRobinHistoryEntity>> = dao.getAllHistory()
     

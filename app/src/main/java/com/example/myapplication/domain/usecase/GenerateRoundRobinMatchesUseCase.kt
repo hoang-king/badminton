@@ -2,7 +2,9 @@ package com.example.myapplication.domain.usecase
 
 import com.example.myapplication.domain.model.Match
 
-class GenerateRoundRobinMatchesUseCase {
+import javax.inject.Inject
+
+class GenerateRoundRobinMatchesUseCase @Inject constructor() {
     operator fun invoke(teamsList: List<List<String>>): List<Match> {
         if (teamsList.isEmpty()) {
             return emptyList()

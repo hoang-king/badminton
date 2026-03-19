@@ -125,7 +125,7 @@ fun BracketScreen(
             },
             confirmButton = {
                 Button(
-                    onClick = { bracketViewModel.saveToHistory(context) },
+                    onClick = { bracketViewModel.saveToHistory() },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = NeonGreen,
                         contentColor = DarkOnPrimary

@@ -2,9 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    // ✅ Thêm plugin serialization
-    kotlin("plugin.serialization") version "1.9.20"
-    // ✅ Thêm kapt plugin thay vì KSP
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.hilt)
     kotlin("kapt")
 }
 
@@ -44,6 +43,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
+    // ✅ Coroutines
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.kotlinx.coroutines.test)
+
     // ✅ Ktor Client (đã loại bỏ OkHttp vì dùng Ktor)
     implementation("io.ktor:ktor-client-core:2.3.7")
     implementation("io.ktor:ktor-client-cio:2.3.7")
@@ -67,6 +71,11 @@ dependencies {
     // ✅ ViewModel cho Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
+
+    // ✅ Hilt
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
 
     // ✅ Room Database
     implementation("androidx.room:room-runtime:2.6.1")

@@ -1,9 +1,7 @@
 package com.example.myapplication.presentation.bracket
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.data.AppDatabase
 import com.example.myapplication.data.RoundRobinHistoryEntity
 import com.example.myapplication.data.repository.RoundRobinHistoryRepository
 import com.example.myapplication.domain.model.BracketMatch
@@ -14,12 +12,17 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+
 /**
  * ViewModel quản lý Knockout Bracket theo mô hình cây nhị phân
  */
-class BracketViewModel : ViewModel() {
-
-    private val generateBracketUseCase = GenerateBracketUseCase()
+@HiltViewModel
+class BracketViewModel @Inject constructor(
+    private val generateBracketUseCase: GenerateBracketUseCase,
+    private val repository: RoundRobinHistoryRepository
+) : ViewModel() {
 
     private val _matches = MutableStateFlow<List<BracketMatch>>(emptyList())
     val matches = _matches.asStateFlow()
@@ -194,7 +197,7 @@ class BracketViewModel : ViewModel() {
         _showSaveDialog.value = false
     }
 
-    fun saveToHistory(context: Context) {
+    fun saveToHistory() {
         val champion = getChampion()
         val championIndex = getChampionIndex()
         val teams = _teams.value
@@ -204,9 +207,6 @@ class BracketViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                val db = AppDatabase.getDatabase(context)
-                val repository = RoundRobinHistoryRepository(db.roundRobinHistoryDao())
-                
                 val winnerTeamName = champion.joinToString(", ")
                 
                 // Encode structure for history

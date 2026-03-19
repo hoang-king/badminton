@@ -8,9 +8,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.TextRange
 
-class GameViewModel : ViewModel() {
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-    private val randomTeamsUseCase = RandomTeamsUseCase()
+@HiltViewModel
+class GameViewModel @Inject constructor(
+    private val randomTeamsUseCase: RandomTeamsUseCase
+) : ViewModel() {
 
     private val _playerInput = MutableStateFlow(TextFieldValue(""))
     val playerInput = _playerInput.asStateFlow()

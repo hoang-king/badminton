@@ -1,9 +1,7 @@
 package com.example.myapplication.presentation.circle
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.data.AppDatabase
 import com.example.myapplication.data.RoundRobinHistoryEntity
 import com.example.myapplication.data.repository.RoundRobinHistoryRepository
 import com.example.myapplication.domain.model.Match
@@ -14,9 +12,14 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-class CircleViewModel : ViewModel() {
-    
-    private val generateRoundRobinMatchesUseCase = GenerateRoundRobinMatchesUseCase()
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+
+@HiltViewModel
+class CircleViewModel @Inject constructor(
+    private val generateRoundRobinMatchesUseCase: GenerateRoundRobinMatchesUseCase,
+    private val repository: RoundRobinHistoryRepository
+) : ViewModel() {
     
     private val _matches = MutableStateFlow<List<Match>>(emptyList())
     val matches = _matches.asStateFlow()
@@ -119,12 +122,9 @@ class CircleViewModel : ViewModel() {
         _showSaveDialog.value = false
     }
 
-    fun saveToHistory(context: Context, matches: List<Match>, teams: List<List<String>>) {
+    fun saveToHistory(matches: List<Match>, teams: List<List<String>>) {
         viewModelScope.launch {
             try {
-                val db = AppDatabase.getDatabase(context)
-                val repository = RoundRobinHistoryRepository(db.roundRobinHistoryDao())
-                
                 val results = matches.mapNotNull { it.winnerIndex }
                 val winnerIndex = findWinner(matches, teams)
                 val winnerTeam = if (winnerIndex >= 0 && winnerIndex < teams.size) {

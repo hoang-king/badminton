@@ -90,7 +90,7 @@ fun CircleScreen(
                 Button(
                     onClick = {
                         scope.launch {
-                            circleViewModel.saveToHistory(context, matches, teams)
+                            circleViewModel.saveToHistory(matches, teams)
                             circleViewModel.closeSaveDialog()
                             navController.navigate("game") {
                                 popUpTo("game") { inclusive = true }
