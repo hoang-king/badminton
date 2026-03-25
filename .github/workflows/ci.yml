@@ -1,1 +1,42 @@
+name: Android CI
 
+on:
+  push:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Grant permission
+        run: chmod +x gradlew
+
+      - name: Run Lint
+        run: ./gradlew lint
+
+      - name: Build
+        run: ./gradlew build
+
+      - name: Notify Discord Success
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d "{\"content\": \"✅ SUCCESS: ${{ github.repository }}\"}" \
+          ${{ secrets.DISCORD_WEBHOOK }}
+
+      - name: Notify Discord Fail
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d "{\"content\": \"❌ FAILED: ${{ github.repository }}\"}" \
+          ${{ secrets.DISCORD_WEBHOOK }}
