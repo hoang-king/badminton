@@ -33,11 +33,11 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
           -d "{\"content\": \"✅ SUCCESS: ${{ github.repository }}\"}" \
-          ${{ secrets.DISCORD_WEBHOOK }}
+          ${{ secrets.https://discord.com/api/webhooks/1486276097573126296/7QjuMysPy2g8yrzSgOGm6t1biFHlkn3WNQg5uvpJH75ubvGaDNzVPc5f8Cfp2RksYZ4F }}
 
       - name: Notify Discord Fail
         if: failure()
         run: |
           curl -H "Content-Type: application/json" \
           -d "{\"content\": \"❌ FAILED: ${{ github.repository }}\"}" \
-          ${{ secrets.DISCORD_WEBHOOK }}
+          ${{ secrets.https://discord.com/api/webhooks/1486276097573126296/7QjuMysPy2g8yrzSgOGm6t1biFHlkn3WNQg5uvpJH75ubvGaDNzVPc5f8Cfp2RksYZ4F }}
