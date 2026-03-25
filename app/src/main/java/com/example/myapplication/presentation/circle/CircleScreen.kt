@@ -667,7 +667,7 @@ private fun TeamColumn(
 
 private fun buildScheduleText(matches: List<Match>, teams: List<List<String>>): String {
     val builder = StringBuilder()
-    builder.append("📋 ROUND ROBIN TOURNAMENT SCHEDULE\n")
+    builder.append("📋 tất cả sao \n")
     builder.append("=" .repeat(50)).append("\n\n")
     builder.append("👥 Teams: ${teams.size}\n")
     builder.append("🏸 Total Matches: ${matches.size}\n\n")
