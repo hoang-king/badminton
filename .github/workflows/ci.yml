@@ -1,8 +1,9 @@
+# CI workflow for Android project
 name: Android CI
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "master" ]
 
 jobs:
   build:
